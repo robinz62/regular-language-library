@@ -1,0 +1,15 @@
+transition table representation?
+
+feature to perform functions on arbitrary instances?
+what would it return?
+or is it returning an abstract type with hidden implementation?
+(referencing the email)
+
+node elimination
+best way 2 do? (completely new data type?)
+
+
+
+TODO
+write tests for EVERYTHING
+make sure everything compiles
