@@ -6,10 +6,8 @@ or is it returning an abstract type with hidden implementation?
 (referencing the email)
 
 node elimination
-best way 2 do? (completely new data type?)
+best way 2 do? (completely new data type? (transitions become strings and all))
 
-
-
-TODO
-write tests for EVERYTHING
-make sure everything compiles
+quickcheck
+plan on using fixed dfa/nfa but testing on arbitrary strings (confined to alphabet)
+ok?

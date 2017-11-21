@@ -1,7 +1,11 @@
+{-# LANGUAGE InstanceSigs #-}
+
 module NFA where
 
 import Data.Map(Map)
 import qualified Data.Map as Map
+
+import Data.Maybe
 
 import Data.Set(Set)
 import qualified Data.Set as Set
@@ -12,27 +16,21 @@ type Node = Int
 
 data NFA = N (Set Node, Set Char, Map (Node, Char) (Set Node), Node, Set Node)
 
-minimize :: NFA -> NFA
-minimize = undefined
+alphabet :: NFA -> Set Char
+alphabet (N (_, s, _, _, _)) = s
 
 instance Matcher NFA where
-  accept :: NFA -> String -> Bool
+  accept :: NFA -> String -> Maybe Bool
   accept = undefined
 
-  union :: NFA -> NFA -> NFA
+  union :: NFA -> NFA -> Maybe NFA
   union = undefined
 
-  intersect :: NFA -> NFA -> NFA
+  intersect :: NFA -> NFA -> Maybe NFA
   intersect = undefined
 
-  minus :: NFA -> NFA -> NFA
+  minus :: NFA -> NFA -> Maybe NFA
   minus = undefined
 
-  toNFA :: NFA -> NFA
-  toNFA = undefined
-
-  fromNFA :: NFA -> NFA
-  fromNFA = undefined
-
-  fromString :: String -> NFA
+  fromString :: String -> Maybe NFA
   fromString = undefined

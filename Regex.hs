@@ -2,7 +2,11 @@
 -- go
 -- here
 
+{-# LANGUAGE InstanceSigs #-}
+
 module Regex where
+
+import Data.Maybe
 
 import Data.Set (Set)
 import qualified Data.Set as Set
@@ -28,23 +32,17 @@ chars = Char . Set.fromList
 
 
 instance Matcher Regex where
-  accept :: Regex -> String -> Bool
+  accept :: Regex -> String -> Maybe Bool
   accept = undefined
 
-  union :: Regex -> Regex -> Regex
+  union :: Regex -> Regex -> Maybe Regex
   union = undefined
 
-  intersect :: Regex -> Regex -> Regex
+  intersect :: Regex -> Regex -> Maybe Regex
   intersect = undefined
 
-  minus :: Regex -> Regex -> Regex
+  minus :: Regex -> Regex -> Maybe Regex
   minus = undefined
 
-  toNFA :: Regex -> NFA
-  toNFA = undefined
-
-  fromNFA :: NFA -> Regex
-  fromNFA = undefined
-
-  fromString :: String -> Regex
+  fromString :: String -> Maybe Regex
   fromString = undefined
