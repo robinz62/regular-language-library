@@ -15,6 +15,7 @@ import Matcher
 type Node = Int
 
 data NFA = N (Set Node, Set Char, Map (Node, Char) (Set Node), Node, Set Node)
+  deriving (Eq)
 
 alphabet :: NFA -> Set Char
 alphabet (N (_, s, _, _, _)) = s

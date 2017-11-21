@@ -15,6 +15,7 @@ import Matcher
 type Node = Int
 
 data DFA = D (Set Node, Set Char, Map (Node, Char) Node, Node, Set Node)
+  deriving (Eq)
 
 minimize :: DFA -> DFA
 minimize = undefined

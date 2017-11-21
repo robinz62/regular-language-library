@@ -15,3 +15,5 @@ regexToNFA = undefined
 
 nfaToRegex :: NFA -> Regex
 nfaToRegex = undefined
+
+-- equality???

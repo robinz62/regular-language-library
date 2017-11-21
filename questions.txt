@@ -11,3 +11,5 @@ best way 2 do? (completely new data type? (transitions become strings and all))
 quickcheck
 plan on using fixed dfa/nfa but testing on arbitrary strings (confined to alphabet)
 ok?
+
+equality of languages in different representations?
