@@ -13,3 +13,14 @@ plan on using fixed dfa/nfa but testing on arbitrary strings (confined to alphab
 ok?
 
 equality of languages in different representations?
+
+
+
+
+
+
+make dfa general (a instead of Char)
+
+nfa/dfa accept
+
+make dfa paramaterized by its alphabet
