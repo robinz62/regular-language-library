@@ -109,15 +109,17 @@ dfaIntersectTest1 = undefined
 
 -- prop: d1 accepts s && d2 accepts s <==> intersect d1 d2 accepts s
 -- dfas need to have the same alphabet
-prop_dfaIntersect1 :: DFA Char -> DFA Char -> String -> Bool
-prop_dfaIntersect1 d1 d2 s = case intersect d1 d2 of
-  Nothing -> DFA.alphabet d1 /= DFA.alphabet d2
-  Just d3 -> case (accept d1 s, accept d2 s) of
-    (Just True, Just True)   -> accept d3 s == Just True
-    (Just False, Just True)  -> accept d3 s == Just False
-    (Just True, Just False)  -> accept d3 s == Just False
-    (Just False, Just False) -> accept d3 s == Just False
-    _                        -> isNothing (accept d3 s)
+prop_dfaIntersect1 :: DFA Char -> DFA Char -> [ABCDE] -> Bool
+prop_dfaIntersect1 d1 d2 str =
+  let s = fmap (\(ABCDE c) -> c) str in
+    case intersect d1 d2 of
+      Nothing -> DFA.alphabet d1 /= DFA.alphabet d2
+      Just d3 -> case (accept d1 s, accept d2 s) of
+        (Just True, Just True)   -> accept d3 s == Just True
+        (Just False, Just True)  -> accept d3 s == Just False
+        (Just True, Just False)  -> accept d3 s == Just False
+        (Just False, Just False) -> accept d3 s == Just False
+        _                        -> isNothing (accept d3 s)
 
 -- test here about set minus
 dfaMinusTest1 :: Test
