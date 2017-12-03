@@ -14,6 +14,11 @@ import Test.QuickCheck
 import Matcher
 import DFA
 
+newtype ABCDE = ABCDE Char deriving (Eq, Ord, Show, Read)
+
+instance Arbitrary ABCDE where
+  arbitrary = elements (fmap ABCDE ['a', 'b', 'c'])
+
 ---------------
 -- some dfas --
 ---------------
@@ -86,15 +91,17 @@ dfaUnionTest1 = undefined
 
 -- prop: d1 accepts s || d2 accepts s <==> union d1 d2 accepts s
 -- dfas need to have the same alphabet
-prop_dfaUnion1 :: DFA Char -> DFA Char -> String -> Bool
-prop_dfaUnion1 d1 d2 s = case union d1 d2 of
-  Nothing -> DFA.alphabet d1 /= DFA.alphabet d2
-  Just d3 -> case (accept d1 s, accept d2 s) of
-    (Just True, _)  -> accept d3 s == Just True
-    (_, Just True)  -> accept d3 s == Just True
-    (Just False, _) -> accept d3 s == Just False
-    (_, Just False) -> accept d3 s == Just False
-    _               -> isNothing (accept d3 s)
+prop_dfaUnion1 :: DFA Char -> DFA Char -> [ABCDE] -> Bool
+prop_dfaUnion1 d1 d2 str =
+  let s = fmap (\(ABCDE c) -> c) str in
+    case union d1 d2 of
+      Nothing -> DFA.alphabet d1 /= DFA.alphabet d2
+      Just d3 -> case (accept d1 s, accept d2 s) of
+        (Just True, _)  -> accept d3 s == Just True
+        (_, Just True)  -> accept d3 s == Just True
+        (Just False, _) -> accept d3 s == Just False
+        (_, Just False) -> accept d3 s == Just False
+        _               -> isNothing (accept d3 s)
 
 -- intersect dfa1 with empty language
 dfaIntersectTest1 :: Test

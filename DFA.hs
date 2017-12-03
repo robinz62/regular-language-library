@@ -32,19 +32,9 @@ alphabet (D (_, s, _, _, _)) = s
 pairToInt :: Int -> Int -> (Int, Int) -> Int
 pairToInt m n (i1, i2) = n * i1 + i2
 
-instance Matcher DFA where
-  accept :: Ord a => DFA a -> [a] -> Maybe Bool
-  accept dfa@(D (q, s, d, q_0, f)) str = eval dfa q_0 str where
-    eval :: Ord a => DFA a -> Node -> [a] -> Maybe Bool
-    eval (D (_, _, _, _, f)) curr [] = Just $ Set.member curr f
-    eval dfa@(D (q, s, d, q_0, f)) curr (x:xs) =
-      do next <- Map.lookup (curr, x) d
-         eval dfa next xs
-
-  -- TODO: error checking (commented below)
-  --       make sure m and n are correct (not reversed)
-  union :: Ord a => DFA a -> DFA a -> Maybe (DFA a)
-  union dfa1@(D (q1, s1, d1, q_01, f1)) dfa2@(D (q2, s2, d2, q_02, f2)) =
+-- pred is the function that we want the final states to be
+crossProductConstruction :: Ord a => ((Node, Node) -> (Set Node, Set Node) -> Bool) -> DFA a -> DFA a -> Maybe (DFA a)
+crossProductConstruction pred dfa1@(D (q1, s1, d1, q_01, f1)) dfa2@(D (q2, s2, d2, q_02, f2)) =
     if s1 /= s2 then Nothing
     else
       let m = Set.size q1
@@ -66,6 +56,7 @@ instance Matcher DFA where
             Just tail -> case x of
               Nothing -> Nothing
               Just head -> Just (head : tail)) (Just []) newTableListMaybe
+          newFinalStates = [ pairToInt m n (q_1, q_2) | (q_1, q_2) <- statePairs, pred (q_1, q_2) (f1, f2) ]
       in case newTableList of
         Nothing -> Nothing
         Just newTable ->
@@ -73,14 +64,38 @@ instance Matcher DFA where
                     s1,
                     Map.fromList newTable,
                     pairToInt m n (q_01, q_02),
-                    Set.union f1 f2)
+                    Set.fromList newFinalStates)
 
+instance Matcher DFA where
+  accept :: Ord a => DFA a -> [a] -> Maybe Bool
+  accept dfa@(D (q, s, d, q_0, f)) str = eval dfa q_0 str where
+    eval :: Ord a => DFA a -> Node -> [a] -> Maybe Bool
+    eval (D (_, _, _, _, f)) curr [] = Just $ Set.member curr f
+    eval dfa@(D (q, s, d, q_0, f)) curr (x:xs) =
+      do next <- Map.lookup (curr, x) d
+         eval dfa next xs
 
-  intersect :: DFA a -> DFA a -> Maybe (DFA a)
-  intersect = undefined
+  -- TODO: make sure m and n are correct (not reversed)
+  union :: Ord a => DFA a -> DFA a -> Maybe (DFA a)
+  union dfa1 dfa2 =
+    crossProductConstruction
+      (\(q1, q2) (f1, f2) -> Set.member q1 f1 || Set.member q2 f2)
+      dfa1
+      dfa2
 
-  minus :: DFA a -> DFA a -> Maybe (DFA a)
-  minus = undefined
+  intersect :: Ord a => DFA a -> DFA a -> Maybe (DFA a)
+  intersect dfa1 dfa2 =
+    crossProductConstruction
+    (\(q1, q2) (f1, f2) -> Set.member q1 f1 && Set.member q2 f2)
+    dfa1
+    dfa2
+
+  minus :: Ord a => DFA a -> DFA a -> Maybe (DFA a)
+  minus dfa1 dfa2 =
+    crossProductConstruction
+    (\(q1, q2) (f1, f2) -> Set.member q1 f1 && not (Set.member q2 f2))
+    dfa1
+    dfa2
 
   fromString :: String -> Maybe (DFA Char)
   fromString s =
