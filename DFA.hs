@@ -2,6 +2,8 @@
 
 module DFA where
 
+import Data.List.Split
+
 import Data.Map(Map)
 import qualified Data.Map as Map
 
@@ -10,31 +12,89 @@ import Data.Maybe
 import Data.Set(Set)
 import qualified Data.Set as Set
 
+import Text.Read
+
 import Matcher
 
 type Node = Int
 
-data DFA = D (Set Node, Set Char, Map (Node, Char) Node, Node, Set Node)
-  deriving (Eq)
+data DFA a = D (Set Node, Set a, Map (Node, a) Node, Node, Set Node)
+  deriving (Eq, Show)
 
-minimize :: DFA -> DFA
+minimize :: DFA a -> DFA a
 minimize = undefined
 
-alphabet :: DFA -> Set Char
+alphabet :: DFA a -> Set a
 alphabet (D (_, s, _, _, _)) = s
 
-instance Matcher DFA where
-  accept :: DFA -> String -> Maybe Bool
-  accept = undefined
+eval :: Ord a => DFA a -> Node -> [a] -> Maybe Bool
+eval (D (_, _, _, _, f)) curr [] = Just $ Set.member curr f
+eval dfa@(D (q, s, d, q_0, f)) curr (x:xs) =
+  do next <- Map.lookup (curr, x) d
+     eval dfa next xs
 
-  union :: DFA -> DFA -> Maybe DFA
+
+instance Matcher DFA where
+  accept :: Ord a => DFA a -> [a] -> Maybe Bool
+  accept dfa@(D (q, s, d, q_0, f)) str = eval dfa q_0 str
+
+  union :: DFA a -> DFA a -> Maybe (DFA a)
   union = undefined
 
-  intersect :: DFA -> DFA -> Maybe DFA
+  intersect :: DFA a -> DFA a -> Maybe (DFA a)
   intersect = undefined
 
-  minus :: DFA -> DFA -> Maybe DFA
+  minus :: DFA a -> DFA a -> Maybe (DFA a)
   minus = undefined
 
-  fromString :: String -> Maybe DFA
-  fromString = undefined
+  fromString :: String -> Maybe (DFA Char)
+  fromString s =
+    let ls1 = lines s
+    in do numNodes <- readMaybe (ls1 !! 0)
+          let nodes = Set.fromList [0..(numNodes - 1)]
+          let ls2 = drop 1 ls1
+          let alphabet = readAlphabet (ls2 !! 0)
+          let ls3 = drop 1 ls2
+          transTable <- readTransitionTable $ take (numNodes * (Set.size alphabet)) ls3
+          let ls4 = drop (numNodes * (Set.size alphabet)) ls3
+          startState <- readMaybe (ls4 !! 0)
+          let ls5 = drop 1 ls4
+          finalStates <- readFinalStates (ls5 !! 0)
+          return $ D (nodes, alphabet, transTable, startState, finalStates)
+
+readAlphabet :: String -> Set Char
+readAlphabet = Set.fromList
+
+-- | reads in a correctly-formatted transition table
+--   returns Nothing if transition table contains syntactic error
+readTransitionTable :: [String] -> Maybe (Map (Node, Char) Node)
+readTransitionTable lines =
+  foldr (\line map ->
+    do m <- map
+       case splitOn " " line of
+         [x, [c], y] -> do xInt <- readMaybe x
+                           yInt <- readMaybe y
+                           return $ Map.insert (xInt, c) yInt m
+         _         -> Nothing)
+    (Just Map.empty)
+    lines
+
+-- | reads in string containing space-separated integers and returns
+--   a Set of Nodes
+--   returns Nothing if input has syntactic error
+readFinalStates :: String -> Maybe (Set Node)
+readFinalStates line =
+  let strStates = splitOn " " line
+  in do intStates <- strToIntStates strStates
+        return (Set.fromList intStates)
+  where
+    strToIntStates :: [String] -> Maybe [Node]
+    strToIntStates list =
+      foldr (\x acc ->
+        if x == ""
+          then acc
+          else do i <- readMaybe x
+                  rest <- acc
+                  return (i : rest))
+        (Just [])
+        list

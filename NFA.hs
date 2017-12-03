@@ -17,11 +17,11 @@ type Node = Int
 data NFA = N (Set Node, Set Char, Map (Node, Char) (Set Node), Node, Set Node)
   deriving (Eq)
 
-alphabet :: NFA -> Set Char
+alphabet :: NFA -> Set a
 alphabet (N (_, s, _, _, _)) = s
 
 instance Matcher NFA where
-  accept :: NFA -> String -> Maybe Bool
+  accept :: NFA -> [a] -> Maybe Bool
   accept = undefined
 
   union :: NFA -> NFA -> Maybe NFA
