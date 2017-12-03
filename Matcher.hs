@@ -10,7 +10,7 @@ class Matcher m where
 
   -- returns a matcher that accepts the union of the input matchers' languages
   -- returns Nothing if the input matchers do not have equal alphabets
-  union      :: m a -> m a -> Maybe (m a)
+  union      :: Ord a => m a -> m a -> Maybe (m a)
 
   -- returns a matcher that accepts the intersection of the input matchers'
   -- languages
