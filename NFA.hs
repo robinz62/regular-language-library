@@ -13,17 +13,9 @@ import Data.Set(Set)
 import qualified Data.Set as Set
 
 import Text.Read
+import Types
 
 import Matcher
-
-type Node = Int
-
-data NFA a = N (Set Node,
-                Set a,
-                (Map (Node, a) (Set Node), Map Node (Set Node)),
-                Node,
-                Set Node)
-  deriving (Eq, Show)
 
 alphabet :: NFA a -> Set a
 alphabet (N (_, s, _, _, _)) = s
