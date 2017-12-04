@@ -10,10 +10,10 @@ dfaToNFA = undefined
 nfaToDFA :: NFA -> DFA
 nfaToDFA = undefined
 
-regexToNFA :: Regex -> NFA
+regexToNFA :: RegexA -> NFA
 regexToNFA = undefined
 
-nfaToRegex :: NFA -> Regex
+nfaToRegex :: NFA -> RegexA
 nfaToRegex = undefined
 
 -- equality???
