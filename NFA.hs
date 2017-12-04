@@ -62,14 +62,14 @@ instance Matcher NFA where
   union nfa1@(N (q1, s1, (d1, de1), q_01, f1)) nfa2 =
     let (N (q2, s2, (d2, de2), q_02, f2)) = offset nfa2 (Set.size q1)
         newNode = Set.size q1 + Set.size q2
-    in Just $ N (
+    in if s1 == s2 then Just $ N (
       Set.unions [q1, q2, Set.singleton newNode],
       s1,
       (Map.union d1 d2,
        Map.unions [de1, de2, Map.singleton newNode (Set.fromList [q_01, q_02])]),
       newNode,
       Set.union f1 f2
-    ) where
+    ) else Nothing where
       -- reassigns all nodes' values to original value + n
       offset :: Ord a => NFA a -> Int -> NFA a
       offset (N (q, s, (d, de), q_0, f)) n =

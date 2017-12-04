@@ -104,34 +104,43 @@ nfaAcceptTest3 = TestList
 -- quickcheck property for union of 2 nfas
 -- nfas need to have the same alphabet
 prop_nfaUnion1 :: NFA Char -> NFA Char -> [ABCDE] -> Bool
-prop_nfaUnion1 d1 d2 str =
+prop_nfaUnion1 n1 n2 str =
   let s = fmap (\(ABCDE c) -> c) str in
-    case union d1 d2 of
-      Nothing -> NFA.alphabet d1 /= NFA.alphabet d2
-      Just d3 -> case (accept d1 s, accept d2 s) of
-        (Just True, _)  -> accept d3 s == Just True
-        (_, Just True)  -> accept d3 s == Just True
-        (Just False, _) -> accept d3 s == Just False
-        (_, Just False) -> accept d3 s == Just False
-        _               -> isNothing (accept d3 s)
+    case union n1 n2 of
+      Nothing -> NFA.alphabet n1 /= NFA.alphabet n2
+      Just n3 -> case (accept n1 s, accept n2 s) of
+        (Just True, _)  -> accept n3 s == Just True
+        (_, Just True)  -> accept n3 s == Just True
+        (Just False, _) -> accept n3 s == Just False
+        (_, Just False) -> accept n3 s == Just False
+        _               -> isNothing (accept n3 s)
 
 -- intersect nfa1 with empty language
-nfaIntersectTest1 :: Test
-nfaIntersectTest1 = undefined
-
--- prop: n1 accepts s && n2 accepts s <==> intersect n1 n2 accepts s
--- nfas must have the same alphabet
-prop_nfaIntersect1 :: NFA Char -> NFA Char -> String -> Bool
-prop_nfaIntersect1 = undefined
-
--- test here about set minus
-nfaMinusTest1 :: Test
-nfaMinusTest1 = undefined
+prop_nfaIntersectTest1 :: NFA Char -> NFA Char -> [ABCDE] -> Bool
+prop_nfaIntersectTest1 n1 n2 str =
+  let s = fmap (\(ABCDE c) -> c) str in
+    case intersect n1 n2 of
+      Nothing -> NFA.alphabet n1 /= NFA.alphabet n2
+      Just n3 -> case (accept n1 s, accept n2 s) of
+        (Just True, _)  -> accept n3 s == Just True
+        (_, Just True)  -> accept n3 s == Just True
+        (Just False, _) -> accept n3 s == Just False
+        (_, Just False) -> accept n3 s == Just False
+        _               -> isNothing (accept n3 s)
 
 -- prop: n1 accepts s && !(n2 accepts s) <==> minus n1 n2 accepts s
 -- nfas must have the same alphabet
-prop_nfaMinus1 :: NFA Char -> NFA Char -> String -> Bool
-prop_nfaMinus1 = undefined
+prop_nfaMinus1 :: NFA Char -> NFA Char -> [ABCDE] -> Bool
+prop_nfaMinus1 n1 n2 str =
+  let s = fmap (\(ABCDE c) -> c) str in
+    case minus n1 n2 of
+      Nothing -> NFA.alphabet n1 /= NFA.alphabet n2
+      Just n3 -> case (accept n1 s, accept n2 s) of
+        (Just True, _)  -> accept n3 s == Just True
+        (_, Just True)  -> accept n3 s == Just True
+        (Just False, _) -> accept n3 s == Just False
+        (_, Just False) -> accept n3 s == Just False
+        _               -> isNothing (accept n3 s)
 
 nfaFromStringTest :: Test
 nfaFromStringTest = TestList
