@@ -25,3 +25,14 @@ data NFA a = N (Set Node,
 
 data DFA a = D (Set Node, Set a, Map (Node, a) Node, Node, Set Node)
   deriving (Eq, Show)
+
+data Regex a = Single (Set a)
+             | Alt (Regex a) (Regex a)
+             | Seq (Regex a) (Regex a)
+             | Star (Regex a)
+             | Empty
+             | Void
+  deriving (Show, Eq)
+
+-- regex with an associated alphabet
+data RegexA a = R (Regex a, Set a) deriving (Eq, Show)

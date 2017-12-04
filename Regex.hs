@@ -12,14 +12,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set
 
 import Matcher
-
-data Regex a = Single (Set a)
-             | Alt (Regex a) (Regex a)
-             | Seq (Regex a) (Regex a)
-             | Star (Regex a)
-             | Empty
-             | Void
-  deriving (Show, Eq)
+import Types
 
 single :: Ord a => a -> Regex a
 single = Single . Set.singleton
@@ -49,9 +42,6 @@ acceptRegex (Seq r1 r2) s = any (\(l, r) -> acceptRegex r1 l && acceptRegex r2 r
 acceptRegex (Star r) s = any (\try -> all (\substr -> acceptRegex r substr) try) (parts s)
 acceptRegex Empty s = s == []
 acceptRegex Void _ = False
-
--- regex with an associated alphabet
-data RegexA a = R (Regex a, Set a) deriving (Eq, Show)
 
 instance Matcher RegexA where
   accept :: Ord a => RegexA a -> [a] -> Maybe Bool

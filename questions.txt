@@ -1,26 +1,5 @@
-transition table representation?
+cyclical dependencies/module design advice pls?
 
-feature to perform functions on arbitrary instances?
-what would it return?
-or is it returning an abstract type with hidden implementation?
-(referencing the email)
+incorporating State monad?
 
-node elimination
-best way 2 do? (completely new data type? (transitions become strings and all))
-
-quickcheck
-plan on using fixed dfa/nfa but testing on arbitrary strings (confined to alphabet)
-ok?
-
-equality of languages in different representations?
-
-
-
-
-
-
-make dfa general (a instead of Char)
-
-nfa/dfa accept
-
-make dfa paramaterized by its alphabet
+can we drop minimization (pls pls pls)?
