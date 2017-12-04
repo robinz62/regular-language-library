@@ -2,4 +2,10 @@ cyclical dependencies/module design advice pls?
 
 incorporating State monad?
 
-can we drop minimization (pls pls pls)?
+can we drop minimization?
+
+
+
+do any classes apply to dfas?
+
+refactor with typeclasses from class (functors, applicatives, monoids, etc)

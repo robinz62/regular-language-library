@@ -78,6 +78,8 @@ instance Matcher DFA where
       do next <- Map.lookup (curr, x) d
          eval dfa next xs
 
+-- fold^
+
   union :: Ord a => DFA a -> DFA a -> Maybe (DFA a)
   union dfa1 dfa2 =
     crossProductConstruction

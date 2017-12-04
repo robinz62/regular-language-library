@@ -13,6 +13,7 @@ import Test.QuickCheck
 
 import Matcher
 import DFA
+import Types
 
 -- | Wrapper around Char for purposes of generating arbitrary strings
 --   restricted to the characters a-e
@@ -93,6 +94,8 @@ dfaAcceptTest2 = TestList
     accept dfa2 "abca" ~?= Just False,
     accept dfa2 "d" ~?= Nothing
   ]
+
+-- Alternative? for below
 
 -- prop: (accept d1 s) || (accept d2 s) <==> accept (union d1 d2) s
 prop_dfaUnion1 :: DFA Char -> DFA Char -> [ABC] -> Bool

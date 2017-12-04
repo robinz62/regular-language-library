@@ -108,33 +108,33 @@ starNFA nfa@(N (q, s, (d, de), q_0, f)) =
     Set.size q,
     Set.insert (Set.size q) f
   )
-
-concatNFA :: Ord a => NFA a -> NFA a -> Maybe (NFA a)
-concatNFA nfa1@(N (q1, s1, (d1, de1), q_01, f1)) nfa2 =
-  let (N (q2, s2, (d2, de2), q_02, f2)) = offset nfa2 (Set.size q1)
-  in if s1 == s2 then Just $ N (
-    Set.union q1 q2,
-    s1,
-    (Map.union d1 d2,
-    -- next line is broken; dont overwrite existing epsilon transitions with new one
-     Map.unions [de1, de2, foldr (\f map -> if Map.member f map Map.adjust (\val -> Set.insert q_02 val) f map) Map.empty (Set.toList f1)]),
-    q_01,
-    f2
-  ) else Nothing where
-    -- reassigns all nodes' values to original value + n
-    offset :: Ord a => NFA a -> Int -> NFA a
-    offset (N (q, s, (d, de), q_0, f)) n =
-      N (
-        relabelSetNodes q n,
-        s,
-        (Map.fromList $ fmap (\((u, x), vs) -> ((u + n, x), relabelSetNodes vs n)) (Map.toList d),
-         Map.fromList $ fmap (\(u, vs) -> (u + n, relabelSetNodes vs n)) (Map.toList de)),
-        q_0 + n,
-        relabelSetNodes f n
-      )
-    -- increments all nodes in set by amount specified
-    relabelSetNodes :: Set Node -> Int -> Set Node
-    relabelSetNodes nodes n = Set.fromList $ fmap (+n) (Set.toList nodes)
+concatNFA = undefined
+-- concatNFA :: Ord a => NFA a -> NFA a -> Maybe (NFA a)
+-- concatNFA nfa1@(N (q1, s1, (d1, de1), q_01, f1)) nfa2 =
+--   let (N (q2, s2, (d2, de2), q_02, f2)) = offset nfa2 (Set.size q1)
+--   in if s1 == s2 then Just $ N (
+--     Set.union q1 q2,
+--     s1,
+--     (Map.union d1 d2,
+--     -- next line is broken; dont overwrite existing epsilon transitions with new one
+--      Map.unions [de1, de2, foldr (\f map -> if Map.member f map Map.adjust (\val -> Set.insert q_02 val) f map) Map.empty (Set.toList f1)]),
+--     q_01,
+--     f2
+--   ) else Nothing where
+--     -- reassigns all nodes' values to original value + n
+--     offset :: Ord a => NFA a -> Int -> NFA a
+--     offset (N (q, s, (d, de), q_0, f)) n =
+--       N (
+--         relabelSetNodes q n,
+--         s,
+--         (Map.fromList $ fmap (\((u, x), vs) -> ((u + n, x), relabelSetNodes vs n)) (Map.toList d),
+--          Map.fromList $ fmap (\(u, vs) -> (u + n, relabelSetNodes vs n)) (Map.toList de)),
+--         q_0 + n,
+--         relabelSetNodes f n
+--       )
+--     -- increments all nodes in set by amount specified
+--     relabelSetNodes :: Set Node -> Int -> Set Node
+--     relabelSetNodes nodes n = Set.fromList $ fmap (+n) (Set.toList nodes)
 
 unionNFA :: Ord a => NFA a -> NFA a -> Maybe (NFA a)
 unionNFA nfa1@(N (q1, s1, (d1, de1), q_01, f1)) nfa2 =
