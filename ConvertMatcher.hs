@@ -9,21 +9,9 @@ import Data.Maybe
 
 import Data.Set(Set)
 import qualified Data.Set as Set
-  
 
-import DFA
-import NFA
 import Regex
 import Types
-
--- data DFA a = D (Set Node, Set a, Map (Node, a) Node, Node, Set Node)
--- deriving (Eq, Show)
-
--- data NFA a = N (Set Node,
---                 Set a,
---                 (Map (Node, a) (Set Node), Map Node (Set Node)),
---                 Node,
---                 Set Node)
 
 dfaToNFA :: DFA a -> NFA a
 dfaToNFA dfa@(D (q, sigma, delta, q0, f)) =
@@ -31,6 +19,7 @@ dfaToNFA dfa@(D (q, sigma, delta, q0, f)) =
   in N (q, sigma, (newDelta, Map.empty), q0, f)
 
 
+-- 
 construct :: Ord a => NFA a -> (Set (Set Node), Map (Set Node, a) (Set Node), Set Node) -> [Set Node] -> DFA a
 construct nfa@(N (q, sigma, (d, de), q0, f)) (dfaQ, dfaD, dfaStart) [] =
   let indexedStates = Set.toList dfaQ
@@ -43,7 +32,6 @@ construct nfa@(N (q, sigma, (d, de), q0, f)) (dfaQ, dfaD, dfaStart) [] =
       newDelta = Map.fromList newDeltaList
       finalList = [ fromJust $ elemIndex s indexedStates | s <- indexedStates, not (Set.null (Set.intersection s f)) ]
   in D (Set.fromList newStates, sigma, newDelta, fromJust $ elemIndex dfaStart indexedStates, Set.fromList finalList)
-
 construct nfa@(N (q, sigma, (d, de), q0, f)) (dfaQ, dfaD, dfaStart) (state : ss) =
   let (dfaQ', dfaD', newCreatedStates) = foldr (\c (accQ, accD, accNewStates) -> let states = Set.toList state
                                                                                      newState = Set.unions $ catMaybes [ Map.lookup (st, c) d | st <- states]

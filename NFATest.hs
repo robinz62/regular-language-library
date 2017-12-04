@@ -13,6 +13,7 @@ import Test.QuickCheck
 
 import Matcher
 import NFA
+import Types
 
 -- | Wrapper around Char for purposes of generating arbitrary strings
 --   restricted to the characters a-e
@@ -30,7 +31,7 @@ instance Arbitrary ABCDE where
 nfa1 :: NFA Char
 nfa1 = N (
   Set.fromList [0, 1, 2],
-  Set.fromList ['a', 'b'],
+  Set.fromList ['a', 'b', 'c'],
   (Map.fromList [((0, 'a'), Set.singleton 1), ((0, 'b'), Set.singleton 0),
                  ((1, 'a'), Set.singleton 2), ((1, 'b'), Set.singleton 1),
                  ((2, 'a'), Set.singleton 2), ((2, 'b'), Set.singleton 2)],
@@ -43,7 +44,7 @@ nfa1 = N (
 nfa2 :: NFA Char
 nfa2 = N (
   Set.fromList [0, 1],
-  Set.fromList ['a'],
+  Set.fromList ['a', 'b', 'c'],
   (Map.empty,
    Map.singleton 0 (Set.singleton 1)),
   0,
@@ -54,7 +55,7 @@ nfa2 = N (
 nfa3 :: NFA Char
 nfa3 = N (
   Set.fromList [0, 1],
-  Set.fromList ['a', 'b'],
+  Set.fromList ['a', 'b', 'c'],
   (Map.fromList [((0, 'a'), Set.fromList [0, 1]), ((0, 'b'), Set.singleton 0)],
    Map.empty),
   0,
@@ -115,31 +116,30 @@ prop_nfaUnion1 n1 n2 str =
         (_, Just False) -> accept n3 s == Just False
         _               -> isNothing (accept n3 s)
 
--- intersect nfa1 with empty language
+-- prop: (accept d1 s) || (accept d2 s) <==> accept (intersect d1 d2) s
 prop_nfaIntersectTest1 :: NFA Char -> NFA Char -> [ABCDE] -> Bool
 prop_nfaIntersectTest1 n1 n2 str =
   let s = fmap (\(ABCDE c) -> c) str in
     case intersect n1 n2 of
       Nothing -> NFA.alphabet n1 /= NFA.alphabet n2
       Just n3 -> case (accept n1 s, accept n2 s) of
-        (Just True, _)  -> accept n3 s == Just True
-        (_, Just True)  -> accept n3 s == Just True
-        (Just False, _) -> accept n3 s == Just False
-        (_, Just False) -> accept n3 s == Just False
+        (Just True, Just True)   -> accept n3 s == Just True
+        (Just False, Just True)  -> accept n3 s == Just False
+        (Just True, Just False)  -> accept n3 s == Just False
+        (Just False, Just False) -> accept n3 s == Just False
         _               -> isNothing (accept n3 s)
 
--- prop: n1 accepts s && !(n2 accepts s) <==> minus n1 n2 accepts s
--- nfas must have the same alphabet
-prop_nfaMinus1 :: NFA Char -> NFA Char -> [ABCDE] -> Bool
-prop_nfaMinus1 n1 n2 str =
+-- prop: (accept d1 s) && (not (accept d2 s)) <==> accept (minus d1 d2) s
+prop_nfaMinusTest1 :: NFA Char -> NFA Char -> [ABCDE] -> Bool
+prop_nfaMinusTest1 n1 n2 str =
   let s = fmap (\(ABCDE c) -> c) str in
     case minus n1 n2 of
       Nothing -> NFA.alphabet n1 /= NFA.alphabet n2
       Just n3 -> case (accept n1 s, accept n2 s) of
-        (Just True, _)  -> accept n3 s == Just True
-        (_, Just True)  -> accept n3 s == Just True
-        (Just False, _) -> accept n3 s == Just False
-        (_, Just False) -> accept n3 s == Just False
+        (Just True, Just True)   -> accept n3 s == Just False
+        (Just False, Just True)  -> accept n3 s == Just False
+        (Just True, Just False)  -> accept n3 s == Just True
+        (Just False, Just False) -> accept n3 s == Just False
         _               -> isNothing (accept n3 s)
 
 nfaFromStringTest :: Test

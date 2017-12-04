@@ -30,7 +30,11 @@ pairToInt :: Int -> Int -> (Int, Int) -> Int
 pairToInt m n (i1, i2) = n * i1 + i2
 
 -- pred is the function that we want the final states to be
-crossProductConstruction :: Ord a => ((Node, Node) -> (Set Node, Set Node) -> Bool) -> DFA a -> DFA a -> Maybe (DFA a)
+crossProductConstruction :: Ord a =>
+                            ((Node, Node) -> (Set Node, Set Node) -> Bool)
+                            -> DFA a
+                            -> DFA a
+                            -> Maybe (DFA a)
 crossProductConstruction pred dfa1@(D (q1, s1, d1, q_01, f1)) dfa2@(D (q2, s2, d2, q_02, f2)) =
     if s1 /= s2 then Nothing
     else

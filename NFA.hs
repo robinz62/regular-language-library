@@ -13,9 +13,11 @@ import Data.Set(Set)
 import qualified Data.Set as Set
 
 import Text.Read
-import Types
 
+import qualified DFA as DFA
+import ConvertMatcher
 import Matcher
+import Types
 
 alphabet :: NFA a -> Set a
 alphabet (N (_, s, _, _, _)) = s
@@ -77,11 +79,14 @@ instance Matcher NFA where
       relabelSetNodes :: Set Node -> Int -> Set Node
       relabelSetNodes nodes n = Set.fromList $ fmap (+n) (Set.toList nodes)
 
-  intersect :: NFA a -> NFA a -> Maybe (NFA a)
-  intersect = undefined
+  -- converts to a DFA to perform intersection, then converts back
+  intersect :: Ord a => NFA a -> NFA a -> Maybe (NFA a)
+  intersect n1 n2 = do dfa <- intersect (nfaToDFA n1) (nfaToDFA n2)
+                       return $ dfaToNFA dfa
 
-  minus :: NFA a -> NFA a -> Maybe (NFA a)
-  minus = undefined
+  minus :: Ord a => NFA a -> NFA a -> Maybe (NFA a)
+  minus n1 n2 = do dfa <- minus (nfaToDFA n1) (nfaToDFA n2)
+                   return $ dfaToNFA dfa
 
   fromString :: String -> Maybe (NFA Char)
   fromString s =

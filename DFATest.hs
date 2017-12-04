@@ -16,10 +16,10 @@ import DFA
 
 -- | Wrapper around Char for purposes of generating arbitrary strings
 --   restricted to the characters a-e
-newtype ABCDE = ABCDE Char deriving (Eq, Ord, Show, Read)
+newtype ABC = ABC Char deriving (Eq, Ord, Show, Read)
 
-instance Arbitrary ABCDE where
-  arbitrary = elements (fmap ABCDE ['a', 'b', 'c'])
+instance Arbitrary ABC where
+  arbitrary = elements (fmap ABC ['a', 'b', 'c'])
 
 runDFATests :: IO ()
 runDFATests = do runTestTT $ TestList [dfaAcceptTest1, dfaAcceptTest2]
@@ -95,9 +95,9 @@ dfaAcceptTest2 = TestList
   ]
 
 -- prop: (accept d1 s) || (accept d2 s) <==> accept (union d1 d2) s
-prop_dfaUnion1 :: DFA Char -> DFA Char -> [ABCDE] -> Bool
+prop_dfaUnion1 :: DFA Char -> DFA Char -> [ABC] -> Bool
 prop_dfaUnion1 d1 d2 str =
-  let s = fmap (\(ABCDE c) -> c) str in
+  let s = fmap (\(ABC c) -> c) str in
     case union d1 d2 of
       Nothing -> DFA.alphabet d1 /= DFA.alphabet d2
       Just d3 -> case (accept d1 s, accept d2 s) of
@@ -108,9 +108,9 @@ prop_dfaUnion1 d1 d2 str =
         _               -> isNothing (accept d3 s)
 
 -- prop: (accept d1 s) || (accept d2 s) <==> accept (intersect d1 d2) s
-prop_dfaIntersect1 :: DFA Char -> DFA Char -> [ABCDE] -> Bool
+prop_dfaIntersect1 :: DFA Char -> DFA Char -> [ABC] -> Bool
 prop_dfaIntersect1 d1 d2 str =
-  let s = fmap (\(ABCDE c) -> c) str in
+  let s = fmap (\(ABC c) -> c) str in
     case intersect d1 d2 of
       Nothing -> DFA.alphabet d1 /= DFA.alphabet d2
       Just d3 -> case (accept d1 s, accept d2 s) of
@@ -121,10 +121,9 @@ prop_dfaIntersect1 d1 d2 str =
         _                        -> isNothing (accept d3 s)
 
 -- prop: (accept d1 s) && (not (accept d2 s)) <==> accept (minus d1 d2) s
--- dfas need to have the same alphabet
-prop_dfaMinus1 :: DFA Char -> DFA Char -> [ABCDE] -> Bool
+prop_dfaMinus1 :: DFA Char -> DFA Char -> [ABC] -> Bool
 prop_dfaMinus1 d1 d2 str =
-  let s = fmap (\(ABCDE c) -> c) str in
+  let s = fmap (\(ABC c) -> c) str in
     case minus d1 d2 of
       Nothing -> DFA.alphabet d1 /= DFA.alphabet d2
       Just d3 -> case (accept d1 s, accept d2 s) of
