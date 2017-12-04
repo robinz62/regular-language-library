@@ -14,10 +14,19 @@ import Test.QuickCheck
 import Matcher
 import DFA
 
+-- | Wrapper around Char for purposes of generating arbitrary strings
+--   restricted to the characters a-e
 newtype ABCDE = ABCDE Char deriving (Eq, Ord, Show, Read)
 
 instance Arbitrary ABCDE where
   arbitrary = elements (fmap ABCDE ['a', 'b', 'c'])
+
+runDFATests :: IO ()
+runDFATests = do runTestTT $ TestList [dfaAcceptTest1, dfaAcceptTest2]
+                 quickCheck (withMaxSuccess 500 (prop_dfaUnion1 dfaEmpty dfa1))
+                 quickCheck (withMaxSuccess 500 (prop_dfaUnion1 dfaEmpty dfa2))
+                 quickCheck (withMaxSuccess 500 (prop_dfaUnion1 dfa1 dfa2))
+                 return ()
 
 ---------------
 -- some dfas --
@@ -85,12 +94,7 @@ dfaAcceptTest2 = TestList
     accept dfa2 "d" ~?= Nothing
   ]
 
--- union dfa1 with empty language
-dfaUnionTest1 :: Test
-dfaUnionTest1 = undefined
-
--- prop: d1 accepts s || d2 accepts s <==> union d1 d2 accepts s
--- dfas need to have the same alphabet
+-- prop: (accept d1 s) || (accept d2 s) <==> accept (union d1 d2) s
 prop_dfaUnion1 :: DFA Char -> DFA Char -> [ABCDE] -> Bool
 prop_dfaUnion1 d1 d2 str =
   let s = fmap (\(ABCDE c) -> c) str in
@@ -103,12 +107,7 @@ prop_dfaUnion1 d1 d2 str =
         (_, Just False) -> accept d3 s == Just False
         _               -> isNothing (accept d3 s)
 
--- intersect dfa1 with empty language
-dfaIntersectTest1 :: Test
-dfaIntersectTest1 = undefined
-
--- prop: d1 accepts s && d2 accepts s <==> intersect d1 d2 accepts s
--- dfas need to have the same alphabet
+-- prop: (accept d1 s) || (accept d2 s) <==> accept (intersect d1 d2) s
 prop_dfaIntersect1 :: DFA Char -> DFA Char -> [ABCDE] -> Bool
 prop_dfaIntersect1 d1 d2 str =
   let s = fmap (\(ABCDE c) -> c) str in
@@ -121,28 +120,27 @@ prop_dfaIntersect1 d1 d2 str =
         (Just False, Just False) -> accept d3 s == Just False
         _                        -> isNothing (accept d3 s)
 
--- test here about set minus
-dfaMinusTest1 :: Test
-dfaMinusTest1 = undefined
-
--- prop: d1 accepts s && not (d2 accepts s) <==> minus d1 d2 accepts s
+-- prop: (accept d1 s) && (not (accept d2 s)) <==> accept (minus d1 d2) s
 -- dfas need to have the same alphabet
-prop_dfaMinus1 :: DFA Char -> DFA Char -> String -> Bool
-prop_dfaMinus1 d1 d2 s = case minus d1 d2 of
-  Nothing -> DFA.alphabet d1 /= DFA.alphabet d2
-  Just d3 -> case (accept d1 s, accept d2 s) of
-    (Just True, Just True)   -> accept d3 s == Just False
-    (Just False, Just True)  -> accept d3 s == Just False
-    (Just True, Just False)  -> accept d3 s == Just True
-    (Just False, Just False) -> accept d3 s == Just False
-    _                        -> isNothing (accept d3 s)
+prop_dfaMinus1 :: DFA Char -> DFA Char -> [ABCDE] -> Bool
+prop_dfaMinus1 d1 d2 str =
+  let s = fmap (\(ABCDE c) -> c) str in
+    case minus d1 d2 of
+      Nothing -> DFA.alphabet d1 /= DFA.alphabet d2
+      Just d3 -> case (accept d1 s, accept d2 s) of
+        (Just True, Just True)   -> accept d3 s == Just False
+        (Just False, Just True)  -> accept d3 s == Just False
+        (Just True, Just False)  -> accept d3 s == Just True
+        (Just False, Just False) -> accept d3 s == Just False
+        _                        -> isNothing (accept d3 s)
 
 dfaFromStringTest :: Test
-dfaFromStringTest = TestList [
-  fromString "1\nabc\n0 a 0\n0 b 0\n0 c 0\n0\n\n" ~?= Just dfaEmpty,
-  fromString "2\nabc\n0 a 0\n0 b 1\n0 c 1\n1 a 1\n1 b 1\n1 c 1\n0\n0" ~?= Just dfa1,
-  fromString "4\nabc\n0 a 1\n0 b 3\n0 c 3\n1 a 3\n1 b 2\n1 c 3\n2 a 3\n2 b 3\n2 c 0\n3 a 3\n3 b 3\n3 c 3\n0\n0" ~?= Just dfa2,
-  fromString "a\nabc\n0 a 0\n0 b 0\n0 c 0\n0\n\n" ~?= (Nothing :: Maybe (DFA Char)),
-  fromString "1\nabc\n0 a z\n0 b 0\n0 c 0\n0\n\n" ~?= (Nothing :: Maybe (DFA Char)),
-  fromString "1\nabc\n0 a 0\n0 b 0\n0 c 0\nz\n\n" ~?= (Nothing :: Maybe (DFA Char))
+dfaFromStringTest = TestList
+  [
+    fromString "1\nabc\n0 a 0\n0 b 0\n0 c 0\n0\n\n" ~?= Just dfaEmpty,
+    fromString "2\nabc\n0 a 0\n0 b 1\n0 c 1\n1 a 1\n1 b 1\n1 c 1\n0\n0" ~?= Just dfa1,
+    fromString "4\nabc\n0 a 1\n0 b 3\n0 c 3\n1 a 3\n1 b 2\n1 c 3\n2 a 3\n2 b 3\n2 c 0\n3 a 3\n3 b 3\n3 c 3\n0\n0" ~?= Just dfa2,
+    fromString "a\nabc\n0 a 0\n0 b 0\n0 c 0\n0\n\n" ~?= (Nothing :: Maybe (DFA Char)),
+    fromString "1\nabc\n0 a z\n0 b 0\n0 c 0\n0\n\n" ~?= (Nothing :: Maybe (DFA Char)),
+    fromString "1\nabc\n0 a 0\n0 b 0\n0 c 0\nz\n\n" ~?= (Nothing :: Maybe (DFA Char))
   ]

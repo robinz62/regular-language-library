@@ -1,3 +1,5 @@
+cabal install split
+
 dfas or something
 
 DFA input format
