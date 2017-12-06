@@ -14,79 +14,48 @@ import qualified Data.Set as Set
 
 import Text.Read
 
-import qualified DFA as DFA
 import ConvertMatcher
 import Matcher
+import Operations
 import Types
 
 alphabet :: NFA a -> Set a
 alphabet (N (_, s, _, _, _)) = s
 
+eval :: Ord a => NFA a -> Set Node -> [a] -> Maybe Bool
+eval (N (_, _, _, _, f)) curr [] = Just $ any (\x -> Set.member x f) curr
+eval nfa@(N (q, s, (d, de), q_0, f)) curr (x:xs) =
+  if not $ Set.member x s
+    then Nothing
+    else let next = ((Set.unions
+                      . catMaybes
+                      . (fmap (\st -> Map.lookup (st, x) d))
+                      . Set.toList) curr)
+        in eval nfa (epsilonClosure nfa next) xs
+
 instance Matcher NFA where
   accept :: Ord a => NFA a -> [a] -> Maybe Bool
   accept nfa@(N (q, s, (d, de), q_0, f)) str =
-    eval nfa (epsilonClosure (Set.singleton q_0)) str where
-      eval :: Ord a => NFA a -> Set Node -> [a] -> Maybe Bool
-      eval (N (_, _, _, _, f)) curr [] = Just $ any (\x -> Set.member x f) curr
-      eval nfa@(N (q, s, (d, de), q_0, f)) curr (x:xs) =
-        if not $ Set.member x s
-          then Nothing
-          else let next = ((Set.unions
-                            . catMaybes
-                            . (fmap (\st -> Map.lookup (st, x) d))
-                            . Set.toList) curr)
-              in eval nfa (epsilonClosure next) xs
-      epsilonClosure :: Set Node -> Set Node
-      epsilonClosure curr =
-        -- convert curr nodes to list, fmap them to their possible next states,
-        -- remove Just/Nothing, add the set of states where we started (since
-        -- not forced to take epsilon transition), then take union
-        let next = (Set.unions
-                    . (:) curr
-                    . catMaybes
-                    . (fmap (\st -> Map.lookup st de))
-                    . Set.toList) curr
-        in if Set.size next == Set.size curr
-          then curr
-          else epsilonClosure next
+    eval nfa (epsilonClosure nfa (Set.singleton q_0)) str
 
-  -- essentially creates a new node as start state with epsilon transitions to
-  -- the previous nfa start states
   union :: Ord a => NFA a -> NFA a -> Maybe (NFA a)
-  union nfa1@(N (q1, s1, (d1, de1), q_01, f1)) nfa2 =
-    let (N (q2, s2, (d2, de2), q_02, f2)) = offset nfa2 (Set.size q1)
-        newNode = Set.size q1 + Set.size q2
-    in if s1 == s2 then Just $ N (
-      Set.unions [q1, q2, Set.singleton newNode],
-      s1,
-      (Map.union d1 d2,
-       Map.unions [de1, de2, Map.singleton newNode (Set.fromList [q_01, q_02])]),
-      newNode,
-      Set.union f1 f2
-    ) else Nothing where
-      -- reassigns all nodes' values to original value + n
-      offset :: Ord a => NFA a -> Int -> NFA a
-      offset (N (q, s, (d, de), q_0, f)) n =
-        N (
-          relabelSetNodes q n,
-          s,
-          (Map.fromList $ fmap (\((u, x), vs) -> ((u + n, x), relabelSetNodes vs n)) (Map.toList d),
-           Map.fromList $ fmap (\(u, vs) -> (u + n, relabelSetNodes vs n)) (Map.toList de)),
-          q_0 + n,
-          relabelSetNodes f n
-        )
-      -- increments all nodes in set by amount specified
-      relabelSetNodes :: Set Node -> Int -> Set Node
-      relabelSetNodes nodes n = Set.fromList $ fmap (+n) (Set.toList nodes)
+  union = nfaUnion
 
   -- converts to a DFA to perform intersection, then converts back
   intersect :: Ord a => NFA a -> NFA a -> Maybe (NFA a)
-  intersect n1 n2 = do dfa <- intersect (nfaToDFA n1) (nfaToDFA n2)
-                       return $ dfaToNFA dfa
+  intersect n1 n2 = do dfa <- dfaIntersect (nfaToDFA n1) (nfaToDFA n2)
+                       return $ dfaToNfa dfa
 
+  -- converts to a DFA to perform minus, then converts back
   minus :: Ord a => NFA a -> NFA a -> Maybe (NFA a)
-  minus n1 n2 = do dfa <- minus (nfaToDFA n1) (nfaToDFA n2)
-                   return $ dfaToNFA dfa
+  minus n1 n2 = do dfa <- dfaMinus (nfaToDFA n1) (nfaToDFA n2)
+                   return $ dfaToNfa dfa
+
+  concat :: Ord a => NFA a -> NFA a -> Maybe (NFA a)
+  concat = nfaConcat
+
+  kStar :: Ord a => NFA a -> Maybe (NFA a)
+  kStar = nfaKStar
 
   fromString :: String -> Maybe (NFA Char)
   fromString s =

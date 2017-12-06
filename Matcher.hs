@@ -22,6 +22,13 @@ class Matcher m where
   -- returns Nothing if the input matchers do not have equal alphabets
   minus      :: Ord a => m a -> m a -> Maybe (m a)
 
+  -- returns a matcher that accepts the langauge containing strings formed by
+  -- concatenating a string from the first with one from the second
+  concat     :: Ord a => m a -> m a -> Maybe (m a)
+
+  -- returns a matcher that accepts the kleene-star of the input language
+  kStar      :: Ord a => m a -> Maybe (m a)
+
   -- parses the input string into a matcher
   -- returns Nothing if string is not parseable
   fromString :: String -> Maybe (m Char)

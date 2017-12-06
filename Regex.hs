@@ -11,7 +11,9 @@ import Data.Maybe
 import Data.Set (Set)
 import qualified Data.Set as Set
 
+import ConvertMatcher
 import Matcher
+import NFA
 import Types
 
 single :: Ord a => a -> Regex a
@@ -57,10 +59,21 @@ instance Matcher RegexA where
       else Just $ R (Alt r1 r2, alpha1)
 
   intersect :: Ord a => RegexA a -> RegexA a -> Maybe (RegexA a)
-  intersect r1 r2 = undefined -- Just $ nfaToRegex (intersect (regexToNFA r1) (regexToNFA r2))
+  intersect r1 r2 = do nfa <- intersect (regexToNfa r1) (regexToNfa r2)
+                       return $ nfaToRegex nfa
 
   minus :: Ord a => RegexA a -> RegexA a -> Maybe (RegexA a)
-  minus = undefined
+  minus r1 r2 = do nfa <- minus (regexToNfa r1) (regexToNfa r2)
+                   return $ nfaToRegex nfa
+
+  concat :: Ord a => RegexA a -> RegexA a -> Maybe (RegexA a)
+  concat (R (r1, alpha1)) (R (r2, alpha2)) =
+    if alpha1 /= alpha2
+      then Nothing
+      else Just $ R (Seq r1 r2, alpha1)
+
+  kStar :: Ord a => RegexA a -> (Maybe (RegexA a))
+  kStar (R (r, alpha)) = Just $ R (Star r, alpha)
 
   fromString :: String -> Maybe (RegexA Char)
   fromString = undefined

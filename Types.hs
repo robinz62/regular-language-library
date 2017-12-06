@@ -12,8 +12,6 @@ import qualified Data.Set as Set
 
 import Text.Read
 
-import Matcher
-
 type Node = Int
 
 data NFA a = N (Set Node,
