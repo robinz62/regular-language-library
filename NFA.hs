@@ -33,6 +33,24 @@ eval nfa@(N (q, s, (d, de), q_0, f)) curr (x:xs) =
                       . Set.toList) curr)
         in eval nfa (epsilonClosure nfa next) xs
 
+instance Show a => Show (NFA a) where
+  show :: NFA a -> String
+  show (N (q, s, (d, de), q_0, f)) =
+    "states:    0-" ++ (show $ Set.size q) ++ "\n"
+    ++ "alphabet: " ++ (show $ Set.toList s) ++ "\n"
+    ++ "transition function:\n"
+    ++ deltaToString d
+    ++ deltaEpToString de
+    ++ "start state: " ++ show q_0 ++ "\n"
+    ++ "final states: " ++ (show $ Set.toList f)
+    where
+      deltaToString :: Show a => Map (Node, a) (Set Node) -> String
+      deltaToString = Map.foldrWithKey (\(u, c) vs acc ->
+        show u ++ " " ++ show c ++ " -> " ++ show (Set.toList vs) ++ "\n" ++ acc) ""
+      deltaEpToString :: Map Node (Set Node) -> String
+      deltaEpToString = Map.foldrWithKey (\u vs acc ->
+        show u ++ " " ++ "ep" ++ " -> " ++ show (Set.toList vs) ++ "\n" ++ acc) ""
+
 instance Matcher NFA where
   accept :: Ord a => NFA a -> [a] -> Maybe Bool
   accept nfa@(N (q, s, (d, de), q_0, f)) str =

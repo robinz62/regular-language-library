@@ -1,7 +1,3 @@
--- comments
--- go
--- here
-
 {-# LANGUAGE InstanceSigs #-}
 
 module Regex where

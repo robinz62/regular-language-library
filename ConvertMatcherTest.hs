@@ -14,12 +14,8 @@ import qualified Data.Set as Set
 import Test.HUnit
 import Test.QuickCheck
 
-import DFA
-import NFA
-import Regex
-import Types
-
 import ConvertMatcher
+import Types
 
 ---------------
 -- some dfas --

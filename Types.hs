@@ -14,15 +14,15 @@ import Text.Read
 
 type Node = Int
 
+data DFA a = D (Set Node, Set a, Map (Node, a) Node, Node, Set Node)
+  deriving (Eq)
+
 data NFA a = N (Set Node,
                 Set a,
                 (Map (Node, a) (Set Node), Map Node (Set Node)),
                 Node,
                 Set Node)
-  deriving (Eq, Show)
-
-data DFA a = D (Set Node, Set a, Map (Node, a) Node, Node, Set Node)
-  deriving (Eq, Show)
+  deriving (Eq)
 
 data Regex a = Single (Set a)
              | Alt (Regex a) (Regex a)
