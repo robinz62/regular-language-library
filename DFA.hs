@@ -13,10 +13,10 @@ import Data.Set(Set)
 import qualified Data.Set as Set
 
 import Text.Read
-import Types
 
 import Matcher
 import Operations
+import Types
 
 alphabet :: DFA a -> Set a
 alphabet (D (_, s, _, _, _)) = s
