@@ -17,9 +17,12 @@ import Test.QuickCheck
 import ConvertMatcher
 import Types
 
----------------
--- some dfas --
----------------
+import DFA
+import NFA
+
+-- ---------------
+-- -- some dfas --
+-- ---------------
 
 -- L = {} using alphabet {a, b, c}
 dfaEmpty :: DFA Char

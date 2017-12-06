@@ -41,8 +41,8 @@ construct nfa@(N (q, sigma, (d, de), q0, f)) (dfaQ, dfaD, dfaStart) (state : ss)
                                                                                    else (newQ, newD, Set.insert newStateClosed accNewStates)) (dfaQ, dfaD, Set.empty) sigma
   in construct nfa (dfaQ', dfaD', dfaStart) (ss ++ (Set.toList newCreatedStates))
 
-nfaToDFA :: Ord a => NFA a -> DFA a
-nfaToDFA nfa@(N (q, sigma, (d, de), q0, f)) =
+nfaToDfa :: Ord a => NFA a -> DFA a
+nfaToDfa nfa@(N (q, sigma, (d, de), q0, f)) =
   let start = epsilonClosure nfa (Set.singleton q0) in
   construct nfa (Set.fromList [start, Set.empty], Map.empty, start) [start]
   

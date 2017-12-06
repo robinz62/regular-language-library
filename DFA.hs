@@ -27,20 +27,6 @@ eval dfa@(D (q, s, d, q_0, f)) curr (x:xs) =
   do next <- Map.lookup (curr, x) d
      eval dfa next xs
 
-instance Show a => Show (DFA a) where
-  show :: DFA a -> String
-  show (D (q, s, d, q_0, f)) =
-    "states:    0-" ++ (show $ Set.size q) ++ "\n"
-    ++ "alphabet: " ++ (show $ Set.toList s) ++ "\n"
-    ++ "transition function:\n"
-    ++ deltaToString d
-    ++ "start state: " ++ show q_0 ++ "\n"
-    ++ "final states: " ++ (show $ Set.toList f)
-    where
-      deltaToString :: Show a => Map (Node, a) Node -> String
-      deltaToString = Map.foldrWithKey (\(u, c) v acc ->
-        show u ++ " " ++ show c ++ " -> " ++ show v ++ "\n" ++ acc) ""
-
 instance Matcher DFA where
   accept :: Ord a => DFA a -> [a] -> Maybe Bool
   accept dfa@(D (q, s, d, q_0, f)) str = eval dfa q_0 str

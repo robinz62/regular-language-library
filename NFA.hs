@@ -33,24 +33,6 @@ eval nfa@(N (q, s, (d, de), q_0, f)) curr (x:xs) =
                       . Set.toList) curr)
         in eval nfa (epsilonClosure nfa next) xs
 
-instance Show a => Show (NFA a) where
-  show :: NFA a -> String
-  show (N (q, s, (d, de), q_0, f)) =
-    "states:    0-" ++ (show $ Set.size q) ++ "\n"
-    ++ "alphabet: " ++ (show $ Set.toList s) ++ "\n"
-    ++ "transition function:\n"
-    ++ deltaToString d
-    ++ deltaEpToString de
-    ++ "start state: " ++ show q_0 ++ "\n"
-    ++ "final states: " ++ (show $ Set.toList f)
-    where
-      deltaToString :: Show a => Map (Node, a) (Set Node) -> String
-      deltaToString = Map.foldrWithKey (\(u, c) vs acc ->
-        show u ++ " " ++ show c ++ " -> " ++ show (Set.toList vs) ++ "\n" ++ acc) ""
-      deltaEpToString :: Map Node (Set Node) -> String
-      deltaEpToString = Map.foldrWithKey (\u vs acc ->
-        show u ++ " " ++ "ep" ++ " -> " ++ show (Set.toList vs) ++ "\n" ++ acc) ""
-
 instance Matcher NFA where
   accept :: Ord a => NFA a -> [a] -> Maybe Bool
   accept nfa@(N (q, s, (d, de), q_0, f)) str =
@@ -61,12 +43,12 @@ instance Matcher NFA where
 
   -- converts to a DFA to perform intersection, then converts back
   intersect :: Ord a => NFA a -> NFA a -> Maybe (NFA a)
-  intersect n1 n2 = do dfa <- dfaIntersect (nfaToDFA n1) (nfaToDFA n2)
+  intersect n1 n2 = do dfa <- dfaIntersect (nfaToDfa n1) (nfaToDfa n2)
                        return $ dfaToNfa dfa
 
   -- converts to a DFA to perform minus, then converts back
   minus :: Ord a => NFA a -> NFA a -> Maybe (NFA a)
-  minus n1 n2 = do dfa <- dfaMinus (nfaToDFA n1) (nfaToDFA n2)
+  minus n1 n2 = do dfa <- dfaMinus (nfaToDfa n1) (nfaToDfa n2)
                    return $ dfaToNfa dfa
 
   concat :: Ord a => NFA a -> NFA a -> Maybe (NFA a)

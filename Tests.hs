@@ -1,5 +1,6 @@
 module Tests where
 
+import ConvertMatcherTest
 import DFATest
 import NFATest
 import RegexTest
