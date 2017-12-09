@@ -43,13 +43,17 @@ instance Matcher NFA where
 
   -- converts to a DFA to perform intersection, then converts back
   intersect :: Ord a => NFA a -> NFA a -> Maybe (NFA a)
-  intersect n1 n2 = do dfa <- dfaIntersect (nfaToDfa n1) (nfaToDfa n2)
-                       return $ dfaToNfa dfa
+  intersect n1 n2 = do dfa1 <- nfaToDfa n1
+                       dfa2 <- nfaToDfa n2
+                       dfa <- dfaIntersect dfa1 dfa2
+                       dfaToNfa dfa
 
   -- converts to a DFA to perform minus, then converts back
   minus :: Ord a => NFA a -> NFA a -> Maybe (NFA a)
-  minus n1 n2 = do dfa <- dfaMinus (nfaToDfa n1) (nfaToDfa n2)
-                   return $ dfaToNfa dfa
+  minus n1 n2 = do dfa1 <- nfaToDfa n1
+                   dfa2 <- nfaToDfa n2
+                   dfa <- dfaMinus dfa1 dfa2
+                   dfaToNfa dfa
 
   concat :: Ord a => NFA a -> NFA a -> Maybe (NFA a)
   concat = nfaConcat
