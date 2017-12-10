@@ -9,7 +9,9 @@ import qualified Data.Set as Set
 
 import ConvertMatcher
 import Matcher
+import MatcherParsers
 import NFA
+import Parser
 import Types
 
 single :: Ord a => a -> Regex a
@@ -55,12 +57,16 @@ instance Matcher RegexA where
       else Just $ R (Alt r1 r2, alpha1)
 
   intersect :: Ord a => RegexA a -> RegexA a -> Maybe (RegexA a)
-  intersect r1 r2 = do nfa <- intersect (regexToNfa r1) (regexToNfa r2)
-                       return $ nfaToRegex nfa
+  intersect r1 r2 = do nfa1 <- regexToNfa r1
+                       nfa2 <- regexToNfa r2
+                       reg  <- intersect nfa1 nfa2
+                       nfaToRegex reg
 
   minus :: Ord a => RegexA a -> RegexA a -> Maybe (RegexA a)
-  minus r1 r2 = do nfa <- minus (regexToNfa r1) (regexToNfa r2)
-                   return $ nfaToRegex nfa
+  minus r1 r2 = do nfa1 <- regexToNfa r1
+                   nfa2 <- regexToNfa r2
+                   reg  <- minus nfa1 nfa2
+                   nfaToRegex reg
 
   concat :: Ord a => RegexA a -> RegexA a -> Maybe (RegexA a)
   concat (R (r1, alpha1)) (R (r2, alpha2)) =
@@ -72,4 +78,7 @@ instance Matcher RegexA where
   kStar (R (r, alpha)) = Just $ R (Star r, alpha)
 
   fromString :: String -> Maybe (RegexA Char)
-  fromString = undefined
+  fromString s = case doParse regexP s of
+    []           -> Nothing
+    (res, ""):xs -> Just $ R (res, Set.empty)
+    _            -> Nothing

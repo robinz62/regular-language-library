@@ -8,6 +8,8 @@ import Types
 
 -- | Parses a regular expression. Precedence from high to low is parentheses,
 --   kleene-star, sequence, then alternation
+--   Note that sequence without the (.) for strings is highest precedence. For
+--   example, ab* will be parsed as (ab)*
 regexP :: Parser (Regex Char)
 regexP = altE
 
