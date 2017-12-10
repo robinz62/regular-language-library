@@ -43,8 +43,147 @@ regexToNfa (R (reg, alpha)) = regToNFA reg alpha where
   regToNFA Empty alpha = Just $ N (Set.singleton 0, alpha, (Map.empty, Map.empty), 0, Set.singleton 0)
   regToNFA Void alpha = Just $ N (Set.singleton 0, alpha, (Map.empty, Map.empty), 0, Set.empty)
 
-nfaToRegex :: NFA a -> Maybe (RegexA a)
-nfaToRegex = undefined
+-- used to preprocess for NFA to regex conversion
+-- adds a new start state with no incoming transitions
+-- adds a new final state with no outgoing transitions
+makeSourceAndSink :: NFA a -> NFA a
+makeSourceAndSink nfa@(N (q, sigma, (d, de), q0, f)) =
+  let newStart = Set.size q
+      newFinal = newStart + 1 in
+  N (Set.insert newStart (Set.insert newFinal q),
+     sigma,
+     (d, Map.insert newStart (Set.singleton q0) (mapUnionSets (foldr (\x acc -> Map.insert x (Set.singleton newFinal) acc) Map.empty (Set.toList f)) de)),
+     newStart,
+     Set.singleton newFinal
+  )
+
+-- reformats the NFA's transition table "Map (Node, a) Node" to be
+-- "Map (Node, Node) (Set a)", not including epsilon transitions
+pairwiseTransitions :: Ord a => NFA a -> Map (Node, Node) (Set a)
+pairwiseTransitions nfa@(N (q, sigma, (d, de), q0, f)) =
+  let states = Set.toList q
+      alphabet = Set.toList sigma in
+  foldr (\s1 accMap ->
+    let mapEntries = foldr (\c accEntries ->
+                        case Map.lookup (s1, c) d of
+                          Nothing -> accEntries
+                          Just s2Set ->
+                            foldr (\s2 s2Acc ->
+                              ((s1, s2), c) : s2Acc
+                            )
+                            accEntries
+                            (Set.toList s2Set)
+                      )
+                      []
+                      alphabet
+    in accumulateEntries mapEntries accMap)
+  Map.empty
+  states where
+    -- adds the list of map entries to the map
+    accumulateEntries :: Ord a => [((Node, Node), a)]
+                               -> Map (Node, Node) (Set a)
+                               -> Map (Node, Node) (Set a)
+    accumulateEntries list map =
+      foldr (\((s1, s2), c) accMap ->
+        case Map.lookup (s1, s2) accMap of
+          Nothing -> Map.insert (s1, s2) (Set.singleton c) accMap
+          Just set -> Map.insert (s1, s2) (Set.insert c set) accMap
+      )
+      map
+      list
+
+
+-- outputs the transition table of the NFA in the format
+-- "Map (Node, Node) (Regex a)"
+pairwiseRegex :: Ord a => NFA a -> Map (Node, Node) (Regex a)
+pairwiseRegex nfa@(N (q, sigma, (d, de), q0, f)) =
+  let states = Set.toList q
+      pairTransitions = pairwiseTransitions nfa
+      regexTransitions = fmap Single pairTransitions in
+  foldr (\(s1, s2set) accMap ->
+    foldr (\s2 accMap2 ->
+      case Map.lookup (s1, s2) accMap of
+        Nothing -> Map.insert (s1, s2) Empty accMap2
+        Just (Single s) -> Map.insert (s1, s2) (Alt (Single s) Empty) accMap2
+        _ -> accMap2  -- should never happen
+    ) accMap (Set.toList s2set)
+  ) regexTransitions (Map.toList de)
+  
+-- temp
+
+-- L = {{a, b}^n a | n >= 0}
+-- for testing nondeterminism
+nfa3 :: NFA Char
+nfa3 = N (
+  Set.fromList [0, 1],
+  Set.fromList ['a', 'b', 'c'],
+  (Map.fromList [((0, 'a'), Set.fromList [0, 1]), ((0, 'b'), Set.singleton 0)],
+   Map.empty),
+  0,
+  Set.singleton 1)
+
+-- L = (abc)* | {abc}*a
+nfa4 :: NFA Char
+nfa4 = N (
+  Set.fromList [0..5],
+  Set.fromList ['a', 'b', 'c'],
+  (Map.fromList [((1, 'a'), Set.singleton 2), ((2, 'b'), Set.singleton 3), ((3, 'c'), Set.singleton 1), ((4, 'a'), Set.fromList [4, 5]), ((4, 'b'), Set.singleton 4), ((4, 'c'), Set.singleton 4)],
+   Map.singleton 0 (Set.fromList [1, 4])),
+  0,
+  Set.fromList [1, 5])
+
+-- end temp
+
+
+buildRegex :: Ord a => (Set Node, Map (Node, Node) (Regex a), Node, Node)
+                    -> Regex a
+                    -- -> (Set Node, Map (Node, Node) (Regex a), Node, Node)
+buildRegex regexNfa@(states, table, q0, qf) =
+  if Set.size states <= 2
+    then fromJust $ Map.lookup (q0, qf) table
+    else
+      let nodes = Set.toList states
+          toRemove = fromJust $ find (\s -> s /= q0 && s /= qf) states in
+      buildRegex (removeNode toRemove regexNfa)
+
+-- removes a node from the "regex-NFA", updating transitions accordingly
+-- known as "node elimination" (Gallier 77)
+removeNode :: Ord a => Node
+                    -> (Set Node, Map (Node, Node) (Regex a), Node, Node)
+                    -> (Set Node, Map (Node, Node) (Regex a), Node, Node)
+removeNode r (states, table, q0, qf) =
+  let states' = Set.delete r states
+      statesList' = Set.toList states'
+      newTransitions = catMaybes
+        [ case (Map.lookup (p, r) table,
+                Map.lookup (r, r) table,
+                Map.lookup (r, q) table,
+                Map.lookup (p, q) table) of
+            (Just pr, Just rr, Just rq, Just pq) ->
+              Just $ ((p, q), Alt pq (Seq (Seq pr (Star rr)) rq))
+            (Just pr, Nothing, Just rq, Just pq) ->
+              Just $ ((p, q), Alt pq (Seq pr rq))
+            (Just pr, Just rr, Just rq, Nothing) ->
+              Just $ ((p, q), Seq (Seq pr (Star rr)) rq)
+            (Just pr, Nothing, Just rq, Nothing) ->
+              Just $ ((p, q), Seq pr rq)
+            (_, _, _, Just pq) -> Just $ ((p, q), pq)
+            (_, _, _, _)       -> Nothing
+        | p <- statesList', q <- statesList', p /= r, q /= r ]
+      transitionsWithoutR = Map.filterWithKey (\(s1, s2) _ ->
+        s1 /= r && s2 /= r) table
+      newTable = foldr (\((s1, s2), reg) accTable ->
+        -- override previous (p -> q) transition with new one
+        Map.insert (s1, s2) reg accTable) transitionsWithoutR newTransitions in
+  (states', newTable, q0, qf)
+
+
+nfaToRegex :: Ord a => NFA a -> Maybe (RegexA a)
+nfaToRegex nfa@(N (q, sigma, (d, de), q0, f)) =
+  let preprocessed@(N (q', _, _, q0', f')) = makeSourceAndSink nfa
+      transitions  = pairwiseRegex preprocessed
+      regex = buildRegex (q', transitions, q0', head $ Set.toList f') in
+  Just $ R (regex, sigma)
 
 -------------
 -- private --

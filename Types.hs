@@ -38,7 +38,7 @@ data RegexA a = R (Regex a, Set a) deriving (Eq, Show)
 instance Show a => Show (DFA a) where
   show :: DFA a -> String
   show (D (q, s, d, q_0, f)) =
-    "states:    0-" ++ (show $ Set.size q) ++ "\n"
+    "states:    0-" ++ (show $ (Set.size q - 1)) ++ "\n"
     ++ "alphabet: " ++ (show $ Set.toList s) ++ "\n"
     ++ "transition function:\n"
     ++ deltaToString d
@@ -52,7 +52,7 @@ instance Show a => Show (DFA a) where
 instance Show a => Show (NFA a) where
   show :: NFA a -> String
   show (N (q, s, (d, de), q_0, f)) =
-    "states:    0-" ++ (show $ Set.size q) ++ "\n"
+    "states:    0-" ++ (show $ (Set.size q - 1)) ++ "\n"
     ++ "alphabet: " ++ (show $ Set.toList s) ++ "\n"
     ++ "transition function:\n"
     ++ deltaToString d
