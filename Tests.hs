@@ -158,12 +158,13 @@ dfaAcceptTest2 = TestList
 dfaFromStringTest :: Test
 dfaFromStringTest = TestList
   [
-    fromString "1\nabc\n0 a 0\n0 b 0\n0 c 0\n0\n\n" ~?= Just dfaEmpty,
-    fromString "2\nabc\n0 a 0\n0 b 1\n0 c 1\n1 a 1\n1 b 1\n1 c 1\n0\n0" ~?= Just dfa1,
-    fromString "4\nabc\n0 a 1\n0 b 3\n0 c 3\n1 a 3\n1 b 2\n1 c 3\n2 a 3\n2 b 3\n2 c 0\n3 a 3\n3 b 3\n3 c 3\n0\n0" ~?= Just dfa2,
-    fromString "a\nabc\n0 a 0\n0 b 0\n0 c 0\n0\n\n" ~?= (Nothing :: Maybe (DFA Char)),
-    fromString "1\nabc\n0 a z\n0 b 0\n0 c 0\n0\n\n" ~?= (Nothing :: Maybe (DFA Char)),
-    fromString "1\nabc\n0 a 0\n0 b 0\n0 c 0\nz\n\n" ~?= (Nothing :: Maybe (DFA Char))
+    fromString "DFA\nN 1\nA [abc]\nTRANSITION\n0 a 0\n0 b 0\n0 c 0\nSTART 0\nF" ~?= Just dfaEmpty,
+    fromString "DFA\nN 2\nA [abc]\nTRANSITION\n0 a 0\n0 b 1\n0 c 1\n1 a 1\n1 b 1\n1 c 1\nSTART 0\nF 0" ~?= Just dfa1,
+    fromString "DFA\nN 4\nA [abc]\nTRANSITION\n0 a 1\n0 b 3\n0 c 3\n1 a 3\n1 b 2\n1 c 3\n2 a 3\n2 b 3\n2 c 0\n3 a 3\n3 b 3\n3 c 3\nSTART 0\nF 0" ~?= Just dfa2,
+    fromString "DFA\nN a\nA [abc]\nTRANSITION\n0 a 0\n0 b 0\n0 c 0\nSTART 0\nF \n" ~?= (Nothing :: Maybe (DFA Char)),
+    fromString "DFA\nN 1\nA [abc]\nTRANSITION\n0 a z\n0 b 0\n0 c 0\nSTART 0\nF \n" ~?= (Nothing :: Maybe (DFA Char)),
+    fromString "DFA\nN 1\nA [abc]\nTRANSITION\n0 a 0\n0 b 0\n0 c 0\nSTART z\nF \n" ~?= (Nothing :: Maybe (DFA Char)),
+    fromString "NFA\nN 1\nA [abc]\nTRANSITION\n0 a 0\n0 b 0\n0 c 0\nSTART z\nF \n" ~?= (Nothing :: Maybe (DFA Char))    
   ]
 
 ---------------
@@ -241,7 +242,7 @@ regexAcceptTest =
 regexFromStringTest :: Test
 regexFromStringTest =
   TestList [
-    
+
   ]
 
 

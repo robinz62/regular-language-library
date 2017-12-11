@@ -169,4 +169,4 @@ startP = string "START " *> oneNat <* char '\n'
 -- | Parses a list of final states
 --   For example, "F 0 1 2" becomes the set { 0, 1, 2 }
 finalP :: Parser (Set Node)
-finalP = Set.fromList <$> (char 'F' *> some (char ' ' *> oneNat))
+finalP = Set.fromList <$> (char 'F' *> many (char ' ' *> oneNat))
