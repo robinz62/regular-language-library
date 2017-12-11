@@ -15,9 +15,6 @@ import Operations
 import Parser
 import Types
 
-alphabet :: DFA a -> Set a
-alphabet (D (_, s, _, _, _)) = s
-
 eval :: Ord a => DFA a -> Node -> [a] -> Maybe Bool
 eval (D (_, _, _, _, f)) curr [] = Just $ Set.member curr f
 eval dfa@(D (q, s, d, q_0, f)) curr (x:xs) =
@@ -25,6 +22,9 @@ eval dfa@(D (q, s, d, q_0, f)) curr (x:xs) =
      eval dfa next xs
 
 instance Matcher DFA where
+  alphabet :: Ord a => DFA a -> Set a
+  alphabet (D (_, s, _, _, _)) = s
+
   accept :: Ord a => DFA a -> [a] -> Maybe Bool
   accept dfa@(D (q, s, d, q_0, f)) str = eval dfa q_0 str
 

@@ -1,6 +1,7 @@
 module MatcherParsers (dfaP,
                        nfaP,
-                       regexP) where
+                       regexP,
+                       regexReservedChars) where
 
 import Control.Applicative
 import Data.Set (Set)
@@ -22,8 +23,11 @@ import Types
 regexP :: Parser (Regex Char)
 regexP = altE
 
+regexReservedChars :: [Char]
+regexReservedChars = ['|', '.', '(', ')', '*']
+
 regexReserved :: Char -> Bool
-regexReserved c = c `elem` ['|', '.', '(', ')', '*']
+regexReserved c = c `elem` regexReservedChars
 
 -- | Parses a raw string (lacking any operators) as a regular expression.
 regexStringP :: Parser (Regex Char)
