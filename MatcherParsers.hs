@@ -133,7 +133,7 @@ alphaP = Set.fromList <$> (
 --   For example, "TRANSITION\n0 a 1\n0 b 1\n" becomes the transitions
 --   ((0, a), 1) and ((0, b), 1)
 transitionsP :: Parser (Map (Node, Char) Node)
-transitionsP = Map.fromList <$> (string "TRANSITION\n" *> some trans) where
+transitionsP = Map.fromList <$> (string "TRANSITION\n" *> many trans) where
   trans = mkTrans <$> (oneNat <* char ' ')
                   <*> (get <* char ' ')
                   <*> oneNat
@@ -144,7 +144,7 @@ transitionsP = Map.fromList <$> (string "TRANSITION\n" *> some trans) where
 --   For example, "TRANSITION\n0 a 1 2 3\n" becomes the transition
 --   ((0, a), { 1, 2, 3})
 nfaTransitionsP :: Parser (Map (Node, Char) (Set Node))
-nfaTransitionsP = Map.fromList <$> (string "TRANSITION\n" *> some trans) where
+nfaTransitionsP = Map.fromList <$> (string "TRANSITION\n" *> many trans) where
   trans = mkTrans <$> (oneNat <* char ' ')
                   <*> get
                   <*> some (char ' ' *> oneNat)
@@ -155,7 +155,7 @@ nfaTransitionsP = Map.fromList <$> (string "TRANSITION\n" *> some trans) where
 --   For example, "EP-TRANSITION\n0 1 2 3\n1 1 2 3" becomes the transitions
 --   (0, {1, 2, 3}) and (1, {1, 2, 3})
 epTransitionsP :: Parser (Map Node (Set Node))
-epTransitionsP = Map.fromList <$> (string "EP-TRANSITION\n" *> some trans) where
+epTransitionsP = Map.fromList <$> (string "EP-TRANSITION\n" *> many trans) where
   trans = mkTrans <$> oneNat
                   <*> some (char ' ' *> oneNat)
                   <*  char '\n'

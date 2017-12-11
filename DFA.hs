@@ -9,6 +9,7 @@ import Data.Set(Set)
 import qualified Data.Set as Set
 import Text.Read
 
+import ConvertMatcher
 import Matcher
 import MatcherParsers
 import Operations
@@ -38,10 +39,15 @@ instance Matcher DFA where
   minus = dfaMinus
 
   concat :: Ord a => DFA a -> DFA a -> Maybe (DFA a)
-  concat = undefined
+  concat dfa1 dfa2 = do nfa1 <- dfaToNfa dfa1
+                        nfa2 <- dfaToNfa dfa2
+                        nfa' <- nfaConcat nfa1 nfa2
+                        nfaToDfa nfa'
 
   kStar :: Ord a => DFA a -> Maybe (DFA a)
-  kStar = undefined
+  kStar dfa = do nfa  <- dfaToNfa dfa
+                 nfa' <- nfaKStar nfa
+                 nfaToDfa nfa'
 
   fromString :: String -> Maybe (DFA Char)
   fromString s = case doParse dfaP s of

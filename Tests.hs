@@ -155,6 +155,23 @@ dfaAcceptTest2 = TestList
     accept dfa2 "d" ~?= Nothing
   ]
 
+dfaConcatTest :: Test
+dfaConcatTest =
+  case Matcher.concat dfa1 dfa2 of
+    Nothing -> True ~?= False
+    Just dfa3 ->
+      TestList [
+        accept dfa3 "" ~?= Just True,
+        accept dfa3 "abc" ~?= Just True,
+        accept dfa3 "aaa" ~?= Just True,
+        accept dfa3 "aabc" ~?= Just True,
+        accept dfa3 "aaabc" ~?= Just True,
+        accept dfa3 "aaabcabc" ~?= Just True,
+        accept dfa3 "abcabc" ~?= Just True,
+        accept dfa3 "aaab" ~?= Just False,
+        accept dfa3 "aaabca" ~?= Just False
+      ]
+
 dfaFromStringTest :: Test
 dfaFromStringTest = TestList
   [
@@ -209,8 +226,9 @@ nfaAcceptTest3 = TestList
 nfaFromStringTest :: Test
 nfaFromStringTest = TestList
   [
-    fromString "3\nabc\n6\n0 a 1\n0 b 0\n1 a 2\n1 b 1\n2 a 2\n2 b 2\n0\n2" ~?= Just nfa1,
-    fromString "2\nabc\n1\n0 ep 1\n0\n1" ~?= Just nfa2
+    fromString "NFA\nN 3\nA [abc]\nTRANSITION\n0 a 1\n0 b 0\n1 a 2\n1 b 1\n2 a 2\n2 b 2\nEP-TRANSITION\nSTART 0\nF 2" ~?= Just nfa1,
+    fromString "NFA\nN 2\nA [abc]\nTRANSITION\nEP-TRANSITION\n0 1\nSTART 0\nF 1" ~?= Just nfa2,
+    fromString "DFA\nN 2\nA [abc]\nTRANSITION\nEP-TRANSITION\n0 1\nSTART 0\nF 1" ~?= (Nothing :: Maybe (NFA Char))
   ]
 
 -----------------
@@ -242,7 +260,15 @@ regexAcceptTest =
 regexFromStringTest :: Test
 regexFromStringTest =
   TestList [
-
+    fromString "" ~?= Just (R (Empty, Set.empty)),
+    fromString "a" ~?= Just (R (Single (Set.singleton 'a'), Set.singleton 'a')),
+    fromString "a|b" ~?= Just (R (Alt (Single (Set.fromList "a")) (Single (Set.fromList "b")), Set.fromList "ab")),
+    fromString "abc" ~?= Just (R (Seq (Single (Set.fromList "a")) (Seq (Single (Set.fromList "b")) (Single (Set.fromList "c"))), Set.fromList "abc")),
+    fromString "a*" ~?= Just (R (Star (Single (Set.fromList "a")), Set.fromList "a")),
+    fromString "(ab)*" ~?= Just (R (Star (Seq (Single (Set.fromList "a")) (Single (Set.fromList "b"))), Set.fromList "ab")),
+    fromString "a.b" ~?= Just (R (Seq (Single (Set.fromList "a")) (Single (Set.fromList "b")), Set.fromList "ab")),
+    fromString "(ab)*.(x|z)" ~?= Just (R (Seq (Star (Seq (Single (Set.fromList "a")) (Single (Set.fromList "b")))) (Alt (Single (Set.fromList "x")) (Single (Set.fromList "z"))), Set.fromList "abxz")),
+    fromString "ab*." ~?= (Nothing :: Maybe (RegexA Char))
   ]
 
 
