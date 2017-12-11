@@ -1,4 +1,6 @@
-module Operations where
+module Operations(dfaUnion, dfaIntersect, dfaMinus,
+                  nfaUnion, nfaConcat, nfaKStar,
+                  epsilonClosure, mapUnionSets, mapUnionsSets) where
 
 import Data.Map(Map)
 import qualified Data.Map as Map

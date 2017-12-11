@@ -24,8 +24,10 @@ import Types
 import SampleMatchers
 
 -- TODO: compile all test cases
-runAllTests :: Test
-runAllTests = undefined
+runAllTests :: IO ()
+runAllTests = do runDFATests
+                 runNFATests
+                 runRegexTests
 
 -- DFA tests
 runDFATests :: IO ()
@@ -234,9 +236,6 @@ testRegexAccept =
     accept reg4 "abc" ~?= Just False,
     accept reg4 "abca" ~?= Just True
   ]
-
-testRegexUnion :: Test
-testRegexUnion = undefined
 
 testFromString :: Test
 testFromString =
