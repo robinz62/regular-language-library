@@ -6,9 +6,7 @@ import qualified Data.List as L
 
 import Data.Map(Map)
 import qualified Data.Map as Map
-
 import Data.Maybe
-
 import Data.Set(Set)
 import qualified Data.Set as Set
 
@@ -28,37 +26,42 @@ runAllTests :: IO ()
 runAllTests = do runDFATests
                  runNFATests
                  runRegexTests
+                 runConvertTests
 
 -- DFA tests
 runDFATests :: IO ()
 runDFATests = do runTestTT $ TestList [dfaAcceptTest1,
                                        dfaAcceptTest2,
+                                       dfaConcatTest,
+                                       dfaKStarTest,
                                        dfaFromStringTest]
-                 quickCheck (withMaxSuccess 500 (prop_union dfaEmpty dfa1))
-                 quickCheck (withMaxSuccess 500 (prop_union dfaEmpty dfa2))
-                 quickCheck (withMaxSuccess 500 (prop_union dfa1 dfa2))
-                 quickCheck (withMaxSuccess 500 (prop_intersect dfaEmpty dfa1))
-                 quickCheck (withMaxSuccess 500 (prop_intersect dfa1 dfa1))
-                 quickCheck (withMaxSuccess 500 (prop_intersect dfa1 dfa2))
-                 quickCheck (withMaxSuccess 500 (prop_minus dfaEmpty dfa1))
-                 quickCheck (withMaxSuccess 500 (prop_minus dfa1 dfaEmpty))
-                 quickCheck (withMaxSuccess 500 (prop_minus dfa2 dfa1))
+                 quickCheck (withMaxSuccess 100 (prop_union dfaEmpty dfa1))
+                 quickCheck (withMaxSuccess 100 (prop_union dfaEmpty dfa2))
+                 quickCheck (withMaxSuccess 100 (prop_union dfa1 dfa2))
+                 quickCheck (withMaxSuccess 100 (prop_intersect dfaEmpty dfa1))
+                 quickCheck (withMaxSuccess 100 (prop_intersect dfa1 dfa1))
+                 quickCheck (withMaxSuccess 100 (prop_intersect dfa1 dfa2))
+                 quickCheck (withMaxSuccess 100 (prop_minus dfaEmpty dfa1))
+                 quickCheck (withMaxSuccess 100 (prop_minus dfa1 dfaEmpty))
+                 quickCheck (withMaxSuccess 100 (prop_minus dfa2 dfa1))
                  return ()
 
 -- NFA tests
 runNFATests :: IO ()
 runNFATests = do runTestTT $ TestList [nfaAcceptTest1,
                                        nfaAcceptTest2,
+                                       nfaConcatTest,
+                                       nfaKStarTest,
                                        nfaFromStringTest]
-                 quickCheck (withMaxSuccess 500 (prop_union nfa1 nfa2))
-                 quickCheck (withMaxSuccess 500 (prop_union nfa1 nfa3))
-                 quickCheck (withMaxSuccess 500 (prop_union nfa3 nfa4))
-                 quickCheck (withMaxSuccess 500 (prop_intersect nfa1 nfa2))
-                 quickCheck (withMaxSuccess 500 (prop_intersect nfa1 nfa3))
-                 quickCheck (withMaxSuccess 500 (prop_intersect nfa3 nfa4))
-                 quickCheck (withMaxSuccess 500 (prop_minus nfa4 nfa2))
-                 quickCheck (withMaxSuccess 500 (prop_minus nfa4 nfa3))
-                 quickCheck (withMaxSuccess 500 (prop_minus nfa4 nfa1))
+                 quickCheck (withMaxSuccess 100 (prop_union nfa1 nfa2))
+                 quickCheck (withMaxSuccess 100 (prop_union nfa1 nfa3))
+                 quickCheck (withMaxSuccess 100 (prop_union nfa3 nfa4))
+                 quickCheck (withMaxSuccess 100 (prop_intersect nfa1 nfa2))
+                 quickCheck (withMaxSuccess 100 (prop_intersect nfa1 nfa3))
+                 quickCheck (withMaxSuccess 100 (prop_intersect nfa3 nfa4))
+                 quickCheck (withMaxSuccess 100 (prop_minus nfa4 nfa2))
+                 quickCheck (withMaxSuccess 100 (prop_minus nfa4 nfa3))
+                 quickCheck (withMaxSuccess 100 (prop_minus nfa4 nfa1))
                  return ()
 
 -- Regex tests
@@ -66,6 +69,8 @@ runRegexTests :: IO ()
 runRegexTests = do runTestTT $ TestList [testSplitPair,
                                          testParts,
                                          regexAcceptTest,
+                                         regexConcatTest,
+                                         regexKStarTest,
                                          regexFromStringTest]
                    quickCheck (withMaxSuccess 100 (prop_union reg1 reg2))
                    quickCheck (withMaxSuccess 100 (prop_union reg1 reg3))
@@ -79,10 +84,23 @@ runRegexTests = do runTestTT $ TestList [testSplitPair,
                    quickCheck (withMaxSuccess  15 (prop_minus reg1 reg2))
                    return ()
 
+runConvertTests :: IO ()
+runConvertTests = do quickCheck $ prop_dfaToNfa dfa2
+                     quickCheck $ prop_dfaToNfa dfa3
+                     quickCheck $ prop_nfaToDfa nfa2
+                     quickCheck $ prop_nfaToDfa nfa3
+                     quickCheck $ prop_regexToNfa reg1
+                     quickCheck $ prop_regexToNfa reg4
+                     quickCheck $ withMaxSuccess 15 (prop_nfaToRegex nfa2)
+                     quickCheck $ withMaxSuccess 15 (prop_nfaToRegex nfa3)
+
 -- common tests for all matchers --
 
 -- prop: accept m1 s <==> accept m2 s
-prop_matcherEquals :: forall m n. (Matcher m, Matcher n) => m Char -> n Char -> [ABC] -> Bool
+prop_matcherEquals :: forall m n. (Matcher m, Matcher n) => m Char
+                                                         -> n Char
+                                                         -> [ABC]
+                                                         -> Bool
 prop_matcherEquals m1 m2 str =
   let s = fmap (\(ABC c) -> c) str in
     accept m1 s == accept m2 s
@@ -126,6 +144,32 @@ prop_minus m1 m2 str =
         (Just False, Just False) -> accept d3 s == Just False
         _                        -> isNothing (accept d3 s)
 
+-- below properties: converting between matcher instances should not change the
+-- accepted language
+-- note that Nothing -> False probably should not actually be always False in
+-- the case the matcher cannot actually be converted
+-- for our purposes, we will always provide valid inputs
+
+prop_dfaToNfa :: DFA Char -> [ABC] -> Bool
+prop_dfaToNfa dfa str = case dfaToNfa dfa of
+  Nothing  -> False
+  Just nfa -> prop_matcherEquals dfa nfa str
+
+prop_nfaToDfa :: NFA Char -> [ABC] -> Bool
+prop_nfaToDfa nfa str = case nfaToDfa nfa of
+  Nothing  -> False
+  Just dfa -> prop_matcherEquals dfa nfa str
+
+prop_nfaToRegex :: NFA Char -> [ABC] -> Bool
+prop_nfaToRegex nfa str = case nfaToRegex nfa of
+  Nothing  -> False
+  Just reg -> prop_matcherEquals nfa reg str
+
+prop_regexToNfa :: RegexA Char -> [ABC] -> Bool
+prop_regexToNfa reg str = case regexToNfa reg of
+  Nothing  -> False
+  Just nfa -> prop_matcherEquals nfa reg str
+
 ---------------
 -- DFA tests --
 ---------------
@@ -159,17 +203,34 @@ dfaConcatTest :: Test
 dfaConcatTest =
   case Matcher.concat dfa1 dfa2 of
     Nothing -> True ~?= False
-    Just dfa3 ->
+    Just dfa' ->
       TestList [
-        accept dfa3 "" ~?= Just True,
-        accept dfa3 "abc" ~?= Just True,
-        accept dfa3 "aaa" ~?= Just True,
-        accept dfa3 "aabc" ~?= Just True,
-        accept dfa3 "aaabc" ~?= Just True,
-        accept dfa3 "aaabcabc" ~?= Just True,
-        accept dfa3 "abcabc" ~?= Just True,
-        accept dfa3 "aaab" ~?= Just False,
-        accept dfa3 "aaabca" ~?= Just False
+        accept dfa' "" ~?= Just True,
+        accept dfa' "abc" ~?= Just True,
+        accept dfa' "aaa" ~?= Just True,
+        accept dfa' "aabc" ~?= Just True,
+        accept dfa' "aaabc" ~?= Just True,
+        accept dfa' "aaabcabc" ~?= Just True,
+        accept dfa' "abcabc" ~?= Just True,
+        accept dfa' "aaab" ~?= Just False,
+        accept dfa' "aaabca" ~?= Just False
+      ]
+
+dfaKStarTest :: Test
+dfaKStarTest =
+  case Matcher.kStar dfa3 of
+    Nothing -> True ~?= False
+    Just dfa' ->
+      TestList [
+        accept dfa' "" ~?= Just True,
+        accept dfa' "ab" ~?= Just True,
+        accept dfa' "ac" ~?= Just True,
+        accept dfa' "aa" ~?= Just False,
+        accept dfa' "abac" ~?= Just True,
+        accept dfa' "abab" ~?= Just True,
+        accept dfa' "acac" ~?= Just True,
+        accept dfa' "abaca" ~?= Just False,
+        accept dfa' "abacab" ~?= Just True
       ]
 
 dfaFromStringTest :: Test
@@ -223,6 +284,37 @@ nfaAcceptTest3 = TestList
     accept nfa3 "d" ~?= Nothing
   ]
 
+nfaConcatTest :: Test
+nfaConcatTest = case Matcher.concat nfa3 nfa4 of
+  Nothing   -> True ~?= False
+  Just nfa' ->
+    TestList [
+      accept nfa' "" ~?= Just False,
+      accept nfa' "a" ~?= Just True,
+      accept nfa' "ac" ~?= Just False,
+      accept nfa' "aabc" ~?= Just True,
+      accept nfa' "baabc" ~?= Just True,
+      accept nfa' "bcaabc" ~?= Just False,
+      accept nfa' "bacba" ~?= Just True,
+      accept nfa' "bbabbaabcabc" ~?= Just True,
+      accept nfa' "c" ~?= Just False,
+      accept nfa' "ccca" ~?= Just False
+    ]
+
+nfaKStarTest :: Test
+nfaKStarTest = case kStar nfa4 of
+  Nothing   -> True ~?= False
+  Just nfa' ->
+    TestList [
+      accept nfa' "" ~?= Just True,
+      accept nfa' "a" ~?= Just True,
+      accept nfa' "abba" ~?= Just True,
+      accept nfa' "abc" ~?= Just True,
+      accept nfa' "aaa" ~?= Just True,
+      accept nfa' "aaaabc" ~?= Just True,
+      accept nfa' "cccbbbaabcabc" ~?= Just True
+    ]
+
 nfaFromStringTest :: Test
 nfaFromStringTest = TestList
   [
@@ -256,6 +348,44 @@ regexAcceptTest =
     accept reg4 "abc" ~?= Just False,
     accept reg4 "abca" ~?= Just True
   ]
+
+regexConcatTest :: Test
+regexConcatTest = case Matcher.concat reg1 reg1 of
+  Nothing   -> True ~?= False
+  Just reg' ->
+    TestList [
+      accept reg' "a" ~?= Just False,
+      accept reg' "b" ~?= Just False,
+      accept reg' "aa" ~?= Just True,
+      accept reg' "ab" ~?= Just True,
+      accept reg' "bb" ~?= Just True,
+      accept reg' "bc" ~?= Just True,
+      accept reg' "cc" ~?= Just True,
+      accept reg' "ca" ~?= Just True,
+      accept reg' "cca" ~?= Just False,
+      accept reg' "aaa" ~?= Just False,
+      accept reg' "" ~?= Just False
+    ]
+
+regexKStarTest :: Test
+regexKStarTest = case kStar reg1 of
+  Nothing   -> True ~?= False
+  Just reg' ->
+    TestList [
+      accept reg' "a" ~?= Just True,
+      accept reg' "b" ~?= Just True,
+      accept reg' "aa" ~?= Just True,
+      accept reg' "ab" ~?= Just True,
+      accept reg' "bb" ~?= Just True,
+      accept reg' "bc" ~?= Just True,
+      accept reg' "cc" ~?= Just True,
+      accept reg' "ca" ~?= Just True,
+      accept reg' "cca" ~?= Just True,
+      accept reg' "aaa" ~?= Just True,
+      accept reg' "" ~?= Just True,
+      accept reg' "abcba" ~?= Just True,
+      accept reg' "bbbbba" ~?= Just True
+    ]
 
 regexFromStringTest :: Test
 regexFromStringTest =

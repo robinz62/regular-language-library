@@ -47,6 +47,17 @@ dfa2 = D (
   0,
   Set.singleton 0)
 
+-- L = { ab, ac } using alphabet {a, b, c}
+dfa3 :: DFA Char
+dfa3 = D (
+  Set.fromList [0..3],
+  Set.fromList ['a', 'b', 'c'],
+  Map.fromList [((0, 'a'), 2), ((0, 'b'), 1), ((0, 'c'), 1),
+                ((1, 'a'), 1), ((1, 'b'), 1), ((1, 'c'), 1),
+                ((2, 'a'), 1), ((2, 'b'), 3), ((2, 'c'), 3),
+                ((3, 'a'), 1), ((3, 'b'), 1), ((3, 'c'), 1)],
+  0,
+  Set.singleton 3)
 
 ---------------
 -- some nfas --

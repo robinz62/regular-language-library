@@ -1,9 +1,0 @@
-cyclical dependencies/module design advice pls?
-
-incorporating State monad?
-
-
-
-do any classes apply to dfas?
-
-refactor with typeclasses from class (functors, applicatives, monoids, etc)
