@@ -2,20 +2,17 @@
 
 module DFA where
 
-import Data.List.Split
-
 import Data.Map(Map)
 import qualified Data.Map as Map
-
 import Data.Maybe
-
 import Data.Set(Set)
 import qualified Data.Set as Set
-
 import Text.Read
 
 import Matcher
+import MatcherParsers
 import Operations
+import Parser
 import Types
 
 eval :: Ord a => DFA a -> Node -> [a] -> Maybe Bool
@@ -47,53 +44,10 @@ instance Matcher DFA where
   kStar = undefined
 
   fromString :: String -> Maybe (DFA Char)
-  fromString s =
-    let ls1 = lines s
-    in do numNodes <- readMaybe (ls1 !! 0)
-          let nodes = Set.fromList [0..(numNodes - 1)]
-          let ls2 = drop 1 ls1
-          let alphabet = readAlphabet (ls2 !! 0)
-          let ls3 = drop 1 ls2
-          transTable <- readDFATransitionTable $ take (numNodes * (Set.size alphabet)) ls3
-          let ls4 = drop (numNodes * (Set.size alphabet)) ls3
-          startState <- readMaybe (ls4 !! 0)
-          let ls5 = drop 1 ls4
-          finalStates <- readFinalStates (ls5 !! 0)
-          return $ D (nodes, alphabet, transTable, startState, finalStates)
-
-readAlphabet :: String -> Set Char
-readAlphabet = Set.fromList
-
--- | reads in a correctly-formatted transition table
---   returns Nothing if transition table contains syntactic error
-readDFATransitionTable :: [String] -> Maybe (Map (Node, Char) Node)
-readDFATransitionTable lines =
-  foldr (\line map ->
-    do m <- map
-       case splitOn " " line of
-         [x, [c], y] -> do xInt <- readMaybe x
-                           yInt <- readMaybe y
-                           return $ Map.insert (xInt, c) yInt m
-         _         -> Nothing)
-    (Just Map.empty)
-    lines
-
--- | reads in string containing space-separated integers and returns
---   a Set of Nodes
---   returns Nothing if input has syntactic error
-readFinalStates :: String -> Maybe (Set Node)
-readFinalStates line =
-  let strStates = splitOn " " line
-  in do intStates <- strToIntStates strStates
-        return (Set.fromList intStates)
-  where
-    strToIntStates :: [String] -> Maybe [Node]
-    strToIntStates list =
-      foldr (\x acc ->
-        if x == ""
-          then acc
-          else do i <- readMaybe x
-                  rest <- acc
-                  return (i : rest))
-        (Just [])
-        list
+  fromString s = case doParse dfaP s of
+    []           -> Nothing
+    (res, ""):xs -> let D (q, sigma, delta, q_0, f) = res in
+                    if Set.size q * Set.size sigma /= Map.size delta
+                      then Nothing
+                      else Just res
+    _            -> Nothing
