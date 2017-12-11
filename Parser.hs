@@ -6,15 +6,17 @@
 
 module Parser (Parser,
                char,
+               string,
+               oneNat,
                satisfy,
                get,
                choose,
                eof,
-               doParse,
-              ) where
+               doParse) where
 
 import Prelude hiding (filter)
 import Control.Applicative
+import Data.Char
 
 newtype Parser a = P (String -> [(a, String)])
 
@@ -23,6 +25,15 @@ doParse (P p) = p
 
 char :: Char -> Parser Char
 char c = satisfy (==c)
+
+string :: String -> Parser String
+string = foldr (\x y -> liftA2 (:) (char x) y) (pure "")
+
+digitChar :: Parser Char
+digitChar = satisfy isDigit
+
+oneNat :: Parser Int
+oneNat = fmap read (some digitChar)
 
 satisfy :: (Char -> Bool) -> Parser Char
 satisfy f = P $ \s -> case s of

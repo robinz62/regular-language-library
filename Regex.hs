@@ -3,7 +3,6 @@
 module Regex where
 
 import Data.Maybe
-
 import Data.Set (Set)
 import qualified Data.Set as Set
 

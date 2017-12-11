@@ -4,29 +4,27 @@ dfas or something
 
 DFA input format
 
---begin string--
-n (e.g. 10)
-alphabet (e.g. abcdefghijklmnopqrstuvwxyz)
+DFA
+N 2
+A [ab]
+TRANSITION
 0 a 1
-0 b 2
-0 c 1
+0 b 1
 1 a 1
-...
-9 z 9
-q0
-space-separated final states
+1 b 1
+START 0
+F 1
 
 NFA input format
---begin string--
-n (e.g. 10)
-alphabet
-m (number of specified transitions)
+
+NFA
+N 3
+A [abc]
+TRANSITION
 0 a 0 1 2
-0 b 0 2 4
-0 c 3 4 5
-...
-9 z 9 8 6
-0 ep 0 1 2
-0 
-q0
-space-separated final states
+1 a 1 2
+EP-TRANSITION
+0 0 1 2
+1 0 1 2
+START 0
+F 1 2
