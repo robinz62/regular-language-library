@@ -77,8 +77,12 @@ instance Matcher RegexA where
   kStar :: Ord a => RegexA a -> (Maybe (RegexA a))
   kStar (R (r, alpha)) = Just $ R (Star r, alpha)
 
+  -- figure out alphabet
   fromString :: String -> Maybe (RegexA Char)
   fromString s = case doParse regexP s of
-    []           -> Nothing
-    (res, ""):xs -> Just $ R (res, Set.empty)
+    []           -> Just $ R (Empty, Set.empty)
+    (res, ""):xs ->
+      let alpha = (Set.fromList s)
+          alpha' = foldr (\x acc -> Set.delete x acc) alpha regexReservedChars
+      in Just $ R (res, alpha')
     _            -> Nothing

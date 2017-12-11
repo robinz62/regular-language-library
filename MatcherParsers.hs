@@ -1,4 +1,5 @@
-module MatcherParsers (regexP) where
+module MatcherParsers (regexP,
+                       regexReservedChars) where
 
 import Control.Applicative
 import qualified Data.Set as Set
@@ -13,8 +14,11 @@ import Types
 regexP :: Parser (Regex Char)
 regexP = altE
 
+regexReservedChars :: [Char]
+regexReservedChars = ['|', '.', '(', ')', '*']
+
 regexReserved :: Char -> Bool
-regexReserved c = c `elem` ['|', '.', '(', ')', '*']
+regexReserved c = c `elem` regexReservedChars
 
 -- | Parses a raw string (lacking any operators) as a regular expression.
 regexStringP :: Parser (Regex Char)
