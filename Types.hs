@@ -2,6 +2,7 @@
 
 module Types where
 
+import qualified Data.List as L
 import Data.Map(Map)
 import qualified Data.Map as Map
 
@@ -50,7 +51,7 @@ data Regex a = Single (Set a)
   deriving (Show, Eq)
 
 -- regex with an associated alphabet
-data RegexA a = R (Regex a, Set a) deriving (Eq, Show)
+data RegexA a = R (Regex a, Set a) deriving (Show, Eq)
 
 -- more efficient constructors
 rStar :: Regex a -> Regex a

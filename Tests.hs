@@ -65,13 +65,14 @@ runNFATests = do runTestTT $ TestList [nfaAcceptTest1,
 runRegexTests :: IO ()
 runRegexTests = do runTestTT $ TestList [testSplitPair,
                                          testParts,
-                                         testRegexAccept]
+                                         regexAcceptTest,
+                                         regexFromStringTest]
                    quickCheck (withMaxSuccess 100 (prop_union reg1 reg2))
                    quickCheck (withMaxSuccess 100 (prop_union reg1 reg3))
                    quickCheck (withMaxSuccess 100 (prop_intersect reg1 reg2))
                    quickCheck (withMaxSuccess 100 (prop_intersect reg1 reg3))
-                  --  quickCheck (withMaxSuccess 100 (prop_minus reg4 reg1))
-                  --  quickCheck (withMaxSuccess 100 (prop_minus reg4 reg3))
+                   quickCheck (withMaxSuccess  15 (prop_minus reg4 reg1))
+                   quickCheck (withMaxSuccess  15 (prop_minus reg4 reg3))
                    quickCheck (withMaxSuccess  15 (prop_minus reg3 reg1))
                    quickCheck (withMaxSuccess  15 (prop_minus reg1 reg3))                  
                    quickCheck (withMaxSuccess  15 (prop_minus reg2 reg1))
@@ -215,8 +216,8 @@ nfaFromStringTest = TestList
 -- regex tests --
 -----------------
 
-testRegexAccept :: Test
-testRegexAccept =
+regexAcceptTest :: Test
+regexAcceptTest =
   TestList [
     accept reg1 "a" ~?= Just True,
     accept reg1 "b" ~?= Just True,
@@ -237,10 +238,10 @@ testRegexAccept =
     accept reg4 "abca" ~?= Just True
   ]
 
-testFromString :: Test
-testFromString =
+regexFromStringTest :: Test
+regexFromStringTest =
   TestList [
-
+    
   ]
 
 

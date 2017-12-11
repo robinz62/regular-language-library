@@ -115,7 +115,7 @@ construct nfa@(N (_, sigma, (d, _), _, _)) (dfaQ, dfaD, dfaStart) (state : ss) =
   in construct nfa (dfaQ', dfaD', dfaStart) (ss ++ (Set.toList createdStates))
 
 
--- used to preprocess for NFA to regex conversion
+-- used for nfaToRegex
 -- adds a new start state with no incoming transitions
 -- adds a new final state with no outgoing transitions
 makeSourceAndSink :: NFA a -> NFA a
@@ -134,6 +134,7 @@ makeSourceAndSink nfa@(N (q, sigma, (d, de), q0, f)) =
      Set.singleton newFinal
   )
 
+-- used for nfaToRegex
 -- reformats the NFA's transition table "Map (Node, a) Node" to be
 -- "Map (Node, Node) (Set a)", not including epsilon transitions
 pairwiseTransitions :: Ord a => NFA a -> Map (Node, Node) (Set a)
@@ -169,6 +170,7 @@ pairwiseTransitions nfa@(N (q, sigma, (d, de), q0, f)) =
       map
       list
 
+-- used for nfaToRegex
 -- outputs the transition table of the NFA in the format
 -- "Map (Node, Node) (Regex a)"
 pairwiseRegex :: Ord a => NFA a -> Map (Node, Node) (Regex a)
@@ -185,6 +187,7 @@ pairwiseRegex nfa@(N (q, sigma, (d, de), q0, f)) =
     ) accMap (Set.toList s2set)
   ) regexTransitions (Map.toList de)
 
+-- used for nfaToRegex
 -- takes in information about the original NFA
 -- (set of states, transitions, initial state, final state) and outputs
 -- the equivalent regex
@@ -198,6 +201,7 @@ buildRegex regexNfa@(states, table, q0, qf) =
       in do toRemove <- L.find (\s -> s /= q0 && s /= qf) nodes
             buildRegex (removeNode toRemove regexNfa)
 
+-- used for nfaToRegex
 -- removes a node from the "regex-NFA", updating transitions accordingly
 -- known as "node elimination" (Gallier 77)
 removeNode :: Ord a => Node
