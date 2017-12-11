@@ -1,4 +1,4 @@
-import ConvertMatcherTest
+import Tests.hs
 
 main :: IO ()
 main = do putStrLn "hmm"

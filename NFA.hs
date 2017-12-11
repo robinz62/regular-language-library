@@ -19,9 +19,6 @@ import Matcher
 import Operations
 import Types
 
-alphabet :: NFA a -> Set a
-alphabet (N (_, s, _, _, _)) = s
-
 eval :: Ord a => NFA a -> Set Node -> [a] -> Maybe Bool
 eval (N (_, _, _, _, f)) curr [] = Just $ any (\x -> Set.member x f) curr
 eval nfa@(N (q, s, (d, de), q_0, f)) curr (x:xs) =
@@ -34,6 +31,9 @@ eval nfa@(N (q, s, (d, de), q_0, f)) curr (x:xs) =
         in eval nfa (epsilonClosure nfa next) xs
 
 instance Matcher NFA where
+  alphabet :: Ord a => NFA a -> Set a
+  alphabet (N (_, s, _, _, _)) = s
+
   accept :: Ord a => NFA a -> [a] -> Maybe Bool
   accept nfa@(N (q, s, (d, de), q_0, f)) str =
     eval nfa (epsilonClosure nfa (Set.singleton q_0)) str

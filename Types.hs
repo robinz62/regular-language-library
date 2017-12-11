@@ -10,7 +10,24 @@ import Data.Maybe
 import Data.Set(Set)
 import qualified Data.Set as Set
 
+import Test.QuickCheck
+
 import Text.Read
+
+-----------------
+-- for testing --
+-----------------
+
+-- | Wrapper around Char for purposes of generating arbitrary strings
+--   restricted to the characters a-e
+newtype ABC = ABC Char deriving (Eq, Ord, Show, Read)
+
+instance Arbitrary ABC where
+  arbitrary = elements (fmap ABC ['a', 'b', 'c'])
+
+-----------
+-- types --
+-----------
 
 type Node = Int
 
@@ -34,6 +51,25 @@ data Regex a = Single (Set a)
 
 -- regex with an associated alphabet
 data RegexA a = R (Regex a, Set a) deriving (Eq, Show)
+
+-- more efficient constructors
+rStar :: Regex a -> Regex a
+rStar (Star x) = Star x
+rStar Empty    = Empty
+rStar Void     = Empty
+rStar r        = Star r
+
+rSeq :: Regex a -> Regex a -> Regex a
+rSeq r Empty = r
+rSeq Empty r = r
+rSeq r Void = Void
+rSeq Void r = Void
+rSeq r1 r2 = Seq r1 r2
+
+rAlt :: Regex a -> Regex a -> Regex a
+rAlt r Void = r
+rAlt Void r = r
+rAlt r1 r2 = Alt r1 r2
 
 instance Show a => Show (DFA a) where
   show :: DFA a -> String

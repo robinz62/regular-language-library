@@ -2,7 +2,7 @@ module ConvertMatcher(dfaToNfa, nfaToDfa, regexToNfa, nfaToRegex) where
 
 import Control.Monad
 
-import Data.List
+import qualified Data.List as L
 import Data.Map(Map)
 import qualified Data.Map as Map
 import Data.Maybe
@@ -40,8 +40,80 @@ regexToNfa (R (reg, alpha)) = regToNFA reg alpha where
                                   nfaConcat nfa1 nfa2
   regToNFA (Star r) alpha = do nfa <- regToNFA r alpha
                                nfaKStar nfa
-  regToNFA Empty alpha = Just $ N (Set.singleton 0, alpha, (Map.empty, Map.empty), 0, Set.singleton 0)
-  regToNFA Void alpha = Just $ N (Set.singleton 0, alpha, (Map.empty, Map.empty), 0, Set.empty)
+  regToNFA Empty alpha = Just $ N (Set.singleton 0,
+                                   alpha,
+                                   (Map.empty, Map.empty),
+                                   0,
+                                   Set.singleton 0)
+  regToNFA Void alpha  = Just $ N (Set.singleton 0,
+                                   alpha,
+                                   (Map.empty, Map.empty),
+                                   0,
+                                   Set.empty)
+
+
+nfaToRegex :: Ord a => NFA a -> Maybe (RegexA a)
+nfaToRegex nfa@(N (q, sigma, (d, de), q0, f)) =
+  let preprocessed@(N (q', _, _, q0', f')) = makeSourceAndSink nfa
+      transitions  = pairwiseRegex preprocessed in
+  do regex <- buildRegex (q', transitions, q0', head $ Set.toList f')
+     return $ R (regex, sigma)
+
+-------------
+-- private --
+-------------
+
+-- subset construction of nfa to dfa
+-- takes in
+--   1) the NFA to construct from
+--   2) the current "DFA-under-construction"
+--   3) a list of subset-states that still need to have transitions added to
+-- returns a DFA equivalent to the input NFA
+construct :: Ord a => NFA a
+                   -> (Set (Set Node), Map (Set Node, a) (Set Node), Set Node)
+                   -> [Set Node]
+                   -> Maybe (DFA a)
+construct nfa@(N (_, sigma, _, _, f)) (dfaQ, dfaD, dfaStart) [] =
+  do let states = Set.toList dfaQ
+     deadState <- L.elemIndex Set.empty states
+     let newStatesMaybe = map (\s -> L.elemIndex s states) states
+     guard (all (/=Nothing) newStatesMaybe)
+     let newStates = catMaybes newStatesMaybe
+     let newDeltaLMaybe = [ do curr <- L.elemIndex s1 states
+                               next <- case Map.lookup (s1, c) dfaD of
+                                         Nothing -> L.elemIndex Set.empty states
+                                         Just s2 -> L.elemIndex s2 states
+                               return ((curr, c), next)
+                          | s1 <- states, c <- Set.toList sigma]
+     guard (all (/=Nothing) newDeltaLMaybe)
+     let newDeltaL = catMaybes newDeltaLMaybe
+     let newDelta = Map.fromList newDeltaL
+     let finalListMaybe = [ L.elemIndex s states
+                          | s <- states, not (Set.null (Set.intersection s f)) ]
+     guard (all (/=Nothing) finalListMaybe)
+     let finalList = catMaybes finalListMaybe
+     startState <- L.elemIndex dfaStart states
+     return $ D (Set.fromList newStates,
+                 sigma,
+                 newDelta,
+                 startState,
+                 Set.fromList finalList)
+construct nfa@(N (_, sigma, (d, _), _, _)) (dfaQ, dfaD, dfaStart) (state : ss) =
+  let
+    (dfaQ', dfaD', createdStates) =
+      foldr (\c (accQ, accD, accNewStates) ->
+        let states = Set.toList state
+            newState = Set.unions $ catMaybes [ Map.lookup (st, c) d
+                                              | st <- states]
+            newStateClosed = epsilonClosure nfa newState
+            newQ = Set.insert newStateClosed accQ
+            newD = Map.insert (state, c) newStateClosed accD
+        in if Set.member newStateClosed accQ
+          then (newQ, newD, accNewStates)
+          else (newQ, newD, Set.insert newStateClosed accNewStates))
+      (dfaQ, dfaD, Set.empty) sigma
+  in construct nfa (dfaQ', dfaD', dfaStart) (ss ++ (Set.toList createdStates))
+
 
 -- used to preprocess for NFA to regex conversion
 -- adds a new start state with no incoming transitions
@@ -52,7 +124,12 @@ makeSourceAndSink nfa@(N (q, sigma, (d, de), q0, f)) =
       newFinal = newStart + 1 in
   N (Set.insert newStart (Set.insert newFinal q),
      sigma,
-     (d, Map.insert newStart (Set.singleton q0) (mapUnionSets (foldr (\x acc -> Map.insert x (Set.singleton newFinal) acc) Map.empty (Set.toList f)) de)),
+     (d,
+      Map.insert newStart (Set.singleton q0) (mapUnionSets (foldr (\x acc ->
+        Map.insert x (Set.singleton newFinal) acc)
+        Map.empty
+        (Set.toList f)) de)
+     ),
      newStart,
      Set.singleton newFinal
   )
@@ -92,7 +169,6 @@ pairwiseTransitions nfa@(N (q, sigma, (d, de), q0, f)) =
       map
       list
 
-
 -- outputs the transition table of the NFA in the format
 -- "Map (Node, Node) (Regex a)"
 pairwiseRegex :: Ord a => NFA a -> Map (Node, Node) (Regex a)
@@ -108,43 +184,19 @@ pairwiseRegex nfa@(N (q, sigma, (d, de), q0, f)) =
         _ -> accMap2  -- should never happen
     ) accMap (Set.toList s2set)
   ) regexTransitions (Map.toList de)
-  
--- temp
 
--- L = {{a, b}^n a | n >= 0}
--- for testing nondeterminism
-nfa3 :: NFA Char
-nfa3 = N (
-  Set.fromList [0, 1],
-  Set.fromList ['a', 'b', 'c'],
-  (Map.fromList [((0, 'a'), Set.fromList [0, 1]), ((0, 'b'), Set.singleton 0)],
-   Map.empty),
-  0,
-  Set.singleton 1)
-
--- L = (abc)* | {abc}*a
-nfa4 :: NFA Char
-nfa4 = N (
-  Set.fromList [0..5],
-  Set.fromList ['a', 'b', 'c'],
-  (Map.fromList [((1, 'a'), Set.singleton 2), ((2, 'b'), Set.singleton 3), ((3, 'c'), Set.singleton 1), ((4, 'a'), Set.fromList [4, 5]), ((4, 'b'), Set.singleton 4), ((4, 'c'), Set.singleton 4)],
-   Map.singleton 0 (Set.fromList [1, 4])),
-  0,
-  Set.fromList [1, 5])
-
--- end temp
-
-
+-- takes in information about the original NFA
+-- (set of states, transitions, initial state, final state) and outputs
+-- the equivalent regex
 buildRegex :: Ord a => (Set Node, Map (Node, Node) (Regex a), Node, Node)
-                    -> Regex a
-                    -- -> (Set Node, Map (Node, Node) (Regex a), Node, Node)
+                    -> Maybe (Regex a)
 buildRegex regexNfa@(states, table, q0, qf) =
   if Set.size states <= 2
-    then fromJust $ Map.lookup (q0, qf) table
+    then Just $ Map.findWithDefault Void (q0, qf) table
     else
       let nodes = Set.toList states
-          toRemove = fromJust $ find (\s -> s /= q0 && s /= qf) states in
-      buildRegex (removeNode toRemove regexNfa)
+      in do toRemove <- L.find (\s -> s /= q0 && s /= qf) nodes
+            buildRegex (removeNode toRemove regexNfa)
 
 -- removes a node from the "regex-NFA", updating transitions accordingly
 -- known as "node elimination" (Gallier 77)
@@ -160,13 +212,13 @@ removeNode r (states, table, q0, qf) =
                 Map.lookup (r, q) table,
                 Map.lookup (p, q) table) of
             (Just pr, Just rr, Just rq, Just pq) ->
-              Just $ ((p, q), Alt pq (Seq (Seq pr (Star rr)) rq))
+              Just $ ((p, q), rAlt pq (rSeq (rSeq pr (rStar rr)) rq))
             (Just pr, Nothing, Just rq, Just pq) ->
-              Just $ ((p, q), Alt pq (Seq pr rq))
+              Just $ ((p, q), rAlt pq (rSeq pr rq))
             (Just pr, Just rr, Just rq, Nothing) ->
-              Just $ ((p, q), Seq (Seq pr (Star rr)) rq)
+              Just $ ((p, q), rSeq (rSeq pr (rStar rr)) rq)
             (Just pr, Nothing, Just rq, Nothing) ->
-              Just $ ((p, q), Seq pr rq)
+              Just $ ((p, q), rSeq pr rq)
             (_, _, _, Just pq) -> Just $ ((p, q), pq)
             (_, _, _, _)       -> Nothing
         | p <- statesList', q <- statesList', p /= r, q /= r ]
@@ -176,66 +228,3 @@ removeNode r (states, table, q0, qf) =
         -- override previous (p -> q) transition with new one
         Map.insert (s1, s2) reg accTable) transitionsWithoutR newTransitions in
   (states', newTable, q0, qf)
-
-
-nfaToRegex :: Ord a => NFA a -> Maybe (RegexA a)
-nfaToRegex nfa@(N (q, sigma, (d, de), q0, f)) =
-  let preprocessed@(N (q', _, _, q0', f')) = makeSourceAndSink nfa
-      transitions  = pairwiseRegex preprocessed
-      regex = buildRegex (q', transitions, q0', head $ Set.toList f') in
-  Just $ R (regex, sigma)
-
--------------
--- private --
--------------
-
--- subset construction of nfa to dfa
--- takes in
---   1) the NFA to construct from
---   2) the current "DFA-under-construction"
---   3) a list of subset-states that still need to have transitions added to
--- returns a DFA equivalent to the input NFA
-construct :: Ord a => NFA a
-                   -> (Set (Set Node), Map (Set Node, a) (Set Node), Set Node)
-                   -> [Set Node]
-                   -> Maybe (DFA a)
-construct nfa@(N (_, sigma, _, _, f)) (dfaQ, dfaD, dfaStart) [] =
-  do let states = Set.toList dfaQ
-     deadState <- elemIndex Set.empty states
-     let newStatesMaybe = map (\s -> elemIndex s states) states
-     guard (all (/=Nothing) newStatesMaybe)
-     let newStates = catMaybes newStatesMaybe
-     let newDeltaLMaybe = [ do curr <- elemIndex s1 states
-                               next <- case Map.lookup (s1, c) dfaD of
-                                         Nothing -> elemIndex Set.empty states
-                                         Just s2 -> elemIndex s2 states
-                               return ((curr, c), next)
-                          | s1 <- states, c <- Set.toList sigma]
-     guard (all (/=Nothing) newDeltaLMaybe)
-     let newDeltaL = catMaybes newDeltaLMaybe
-     let newDelta = Map.fromList newDeltaL
-     let finalListMaybe = [ elemIndex s states
-                          | s <- states, not (Set.null (Set.intersection s f)) ]
-     guard (all (/=Nothing) finalListMaybe)
-     let finalList = catMaybes finalListMaybe
-     startState <- elemIndex dfaStart states
-     return $ D (Set.fromList newStates,
-                 sigma,
-                 newDelta,
-                 startState,
-                 Set.fromList finalList)
-construct nfa@(N (_, sigma, (d, _), _, _)) (dfaQ, dfaD, dfaStart) (state : ss) =
-  let
-    (dfaQ', dfaD', createdStates) =
-      foldr (\c (accQ, accD, accNewStates) ->
-        let states = Set.toList state
-            newState = Set.unions $ catMaybes [ Map.lookup (st, c) d
-                                              | st <- states]
-            newStateClosed = epsilonClosure nfa newState
-            newQ = Set.insert newStateClosed accQ
-            newD = Map.insert (state, c) newStateClosed accD
-        in if Set.member newStateClosed accQ
-          then (newQ, newD, accNewStates)
-          else (newQ, newD, Set.insert newStateClosed accNewStates))
-      (dfaQ, dfaD, Set.empty) sigma
-  in construct nfa (dfaQ', dfaD', dfaStart) (ss ++ (Set.toList createdStates))

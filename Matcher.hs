@@ -1,8 +1,12 @@
 module Matcher where
 
 import Data.Maybe
+import Data.Set (Set)
 
 class Matcher m where
+  -- returns the matcher's alphabet
+  alphabet   :: Ord a => m a -> Set a
+
   -- returns whether or not the matcher accepts the input string
   -- returns Nothing if input string has character not specified in the
   -- matcher's alphabet

@@ -44,6 +44,9 @@ acceptRegex Empty s = s == []
 acceptRegex Void _ = False
 
 instance Matcher RegexA where
+  alphabet :: Ord a => RegexA a -> Set a
+  alphabet (R (_, sigma)) = sigma
+
   accept :: Ord a => RegexA a -> [a] -> Maybe Bool
   accept (R (regex, alphabet)) str =
     if foldr (\x acc -> Set.member x alphabet && acc) True str
