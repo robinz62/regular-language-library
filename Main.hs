@@ -1,5 +1,4 @@
-import Tests.hs
+import Tests
 
 main :: IO ()
-main = do putStrLn "hmm"
-          return ()
+main = do return ()

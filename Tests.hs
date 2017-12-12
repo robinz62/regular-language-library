@@ -21,7 +21,7 @@ import Regex
 import Types
 import SampleMatchers
 
--- TODO: compile all test cases
+-- all tests compiled
 runAllTests :: IO ()
 runAllTests = do runDFATests
                  runNFATests

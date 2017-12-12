@@ -20,7 +20,7 @@ import Text.Read
 -----------------
 
 -- | Wrapper around Char for purposes of generating arbitrary strings
---   restricted to the characters a-e
+--   restricted to the characters a-c
 newtype ABC = ABC Char deriving (Eq, Ord, Show, Read)
 
 instance Arbitrary ABC where
@@ -48,7 +48,7 @@ data Regex a = Single (Set a)
              | Star (Regex a)
              | Empty
              | Void
-  deriving (Show, Eq)
+  deriving (Eq)
 
 -- regex with an associated alphabet
 data RegexA a = R (Regex a, Set a) deriving (Show, Eq)
@@ -103,3 +103,12 @@ instance Show a => Show (NFA a) where
       deltaEpToString :: Map Node (Set Node) -> String
       deltaEpToString = Map.foldrWithKey (\u vs acc ->
         show u ++ " " ++ "ep" ++ " -> " ++ show (Set.toList vs) ++ "\n" ++ acc) ""
+
+instance Show a => Show (Regex a) where
+  show :: Regex a -> String
+  show (Single s) = L.concat $ L.intersperse "|" (map show (Set.toList s))
+  show (Alt r1 r2) = "(" ++ show r1 ++ ")|(" ++ show r2 ++ ")"
+  show (Seq r1 r2) = "(" ++ show r1 ++ ").(" ++ show r2 ++ ")"
+  show (Star r) = "(" ++ show r ++ ")*"
+  show Empty = "Empty"
+  show Void = "Void"
