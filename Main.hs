@@ -1,4 +1,5 @@
 import Tests
 
 main :: IO ()
-main = do return ()
+main = do runAllTests
+          return ()
