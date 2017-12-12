@@ -1,6 +1,4 @@
-Robin Zhang (rzha)
-
-Roger Zhang (rogerz)
+Robin Zhang (rzha), Roger Zhang (rogerz)
 
 ## Order to read source files
 - Types.hs: defines the datatypes (such as DFA, NFA, etc.) that are used
