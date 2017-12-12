@@ -1,4 +1,4 @@
-module Matcher where
+module Matcher (Matcher (..)) where
 
 import Data.Maybe
 import Data.Set (Set)

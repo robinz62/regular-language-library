@@ -9,7 +9,6 @@ import qualified Data.Map as Map
 import Data.Maybe
 import Data.Set(Set)
 import qualified Data.Set as Set
-
 import Test.HUnit
 import Test.QuickCheck
 
@@ -20,6 +19,14 @@ import NFA
 import Regex
 import Types
 import SampleMatchers
+
+
+-- | Wrapper around Char for purposes of generating arbitrary strings
+--   restricted to the characters a-c
+newtype ABC = ABC Char deriving (Eq, Ord, Show, Read)
+
+instance Arbitrary ABC where
+  arbitrary = elements (fmap ABC ['a', 'b', 'c'])
 
 -- all tests compiled
 runAllTests :: IO ()

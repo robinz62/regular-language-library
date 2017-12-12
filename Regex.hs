@@ -1,6 +1,9 @@
 {-# LANGUAGE InstanceSigs #-}
 
-module Regex where
+module Regex (single,
+              singles,
+              splitPair,
+              parts) where
 
 import Data.Maybe
 import Data.Set (Set)

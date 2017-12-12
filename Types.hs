@@ -1,30 +1,22 @@
 {-# LANGUAGE InstanceSigs #-}
 
-module Types where
+module Types(Node,
+             DFA (..),
+             NFA (..),
+             Regex (..),
+             RegexA (..),
+             rStar,
+             rSeq,
+             rAlt) where
 
 import qualified Data.List as L
 import Data.Map(Map)
 import qualified Data.Map as Map
-
 import Data.Maybe
-
 import Data.Set(Set)
 import qualified Data.Set as Set
-
 import Test.QuickCheck
-
 import Text.Read
-
------------------
--- for testing --
------------------
-
--- | Wrapper around Char for purposes of generating arbitrary strings
---   restricted to the characters a-c
-newtype ABC = ABC Char deriving (Eq, Ord, Show, Read)
-
-instance Arbitrary ABC where
-  arbitrary = elements (fmap ABC ['a', 'b', 'c'])
 
 -----------
 -- types --
