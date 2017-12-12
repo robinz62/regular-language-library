@@ -36,7 +36,7 @@ The main features of this library are:
 
 ## Compiling
 - Our project is a library that provides useful operations, so it doesn't
-  really have a main executable. Compiling with "ghc --make Main.hs" will
+  really have a main executable. Compiling with `ghc --make Main.hs` will
   create an executable that simply runs all the test cases. Loading Tests.hs
   in ghci will let you play around with the available functions.
 
