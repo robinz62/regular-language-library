@@ -81,6 +81,8 @@ START {start state}
 F {space separated final states}
 ```
 
+Example:
+
 ```
 NFA
 N 3
@@ -98,17 +100,17 @@ F 1 2
 Regex input format
 
 Any characters typed will be added to the alphabet. Available regex commands
-include alternation (|), sequence (.), kleene-star (\*), and parentheses
-grouping. Sequencing with (.) is always required except when sequencing
-individual characters (e.g. abc). In this case, note that this sequence will
-have the highest precedence (i.e. abc\* is equivalent to (abc)\*)
+include alternation (`|`), sequence (`.`), kleene-star (`*`), and parentheses
+grouping. Sequencing with (`.`) is always required except when sequencing
+individual characters (e.g. `abc`). In this case, note that this sequence will
+have the highest precedence (i.e. `abc*` is equivalent to `(abc)*`).
 
 Examples:
 
 ```
 a
 a|b
-(a|b)\*
-(ab|cd)\*.(xyz)\*
+(a|b)*
+(ab|cd)*.(xyz)*
 a|b|c|d
 ```
