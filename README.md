@@ -1,5 +1,8 @@
 Robin Zhang (rzha), Roger Zhang (rogerz)
 
+Our final project for CIS 552: Advanced Programming, taught at the University of
+Pennsylvania.
+
 ## Regular Language Library
 The main features of this library are:
 - The `Matcher` class and its implementations (`DFA`, `NFA`, and `RegexA`). The
@@ -11,8 +14,9 @@ The main features of this library are:
   other's `accept` function (even when it may be faster) and instead
   implemented accept purely within that `Matcher` (more interesting).
 - The `ConvertMatcher` module provides functions to convert between the three
-  instances of `Matcher` that we implemented using the standard algorithms
-  (subset construction, node elimination).
+  instances of `Matcher` that we implemented
+- Implemented algorithms include subset construction, node elimination,
+  Thompson's construction, etc.
 
 ## Order to read source files
 - Types.hs: defines the datatypes (such as DFA, NFA, etc.) that are used
