@@ -3,7 +3,7 @@ Robin Zhang (rzha), Roger Zhang (rogerz)
 Our final project for CIS 552: Advanced Programming, taught at the University of
 Pennsylvania.
 
-## Regular Language Library
+# Regular Language Library
 The main features of this library are:
 - The `Matcher` class and its implementations (`DFA`, `NFA`, and `RegexA`). The
   class represents a regular language, and it's primary purpose is to accept or
@@ -18,7 +18,7 @@ The main features of this library are:
 - Implemented algorithms include subset construction, node elimination,
   Thompson's construction, etc.
 
-## Order to read source files
+# Order to read source files
 - Types.hs: defines the datatypes (such as DFA, NFA, etc.) that are used
   in almost every other source file
 - Matcher.hs: the class interface that defines what functions any instance
@@ -29,7 +29,7 @@ The main features of this library are:
 - ConvertMatcher.hs: defines functions for converting between the three
   matchers (DFA, NFA, Regex)
 
-## Other source files
+# Other source files
 - Operations.hs: defines some functions used by other source files; reading
   this file is optional for understanding the project
 - MatcherParsers.hs: defines parsers to specifically parse our DFAs, NFAs, and
@@ -38,13 +38,13 @@ The main features of this library are:
 - SampleMatchers.hs: some prebuilt DFAs, NFAs, and Regexs for testing
 - Tests.hs: contains all tests, separated into sections
 
-## Compiling
+# Compiling
 - Our project is a library that provides useful operations, so it doesn't
   really have a main executable. Compiling with `ghc --make Main.hs` will
   create an executable that simply runs all the test cases. Loading Tests.hs
   in ghci will let you play around with the available functions.
 
-## Input Formats for the fromString function (in Matcher.hs)
+# Input Formats for the fromString function (in Matcher.hs)
 
 DFA input format (each line is terminated by a newline character, last line
 should not have a newline character)
