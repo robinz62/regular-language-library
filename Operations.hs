@@ -15,29 +15,23 @@ import Types
 -- | Returns a DFA accepting the union of the languages specified by the input
 --   DFAs. Uses cross product construction.
 dfaUnion :: Ord a => DFA a -> DFA a -> Maybe (DFA a)
-dfaUnion dfa1 dfa2 =
+dfaUnion =
   crossProductConstruct
     (\(q1, q2) (f1, f2) -> Set.member q1 f1 || Set.member q2 f2)
-    dfa1
-    dfa2
 
 -- | Returns a DFA accepting the intersection of the languages specified by the
 --   input DFAs. Uses cross product construction.
 dfaIntersect :: Ord a => DFA a -> DFA a -> Maybe (DFA a)
-dfaIntersect dfa1 dfa2 =
+dfaIntersect =
   crossProductConstruct
   (\(q1, q2) (f1, f2) -> Set.member q1 f1 && Set.member q2 f2)
-  dfa1
-  dfa2
 
 -- | Returns a DFA accepting the relative complement of the languages specified
 --   by the input DFAs. Uses cross product construction.
 dfaMinus :: Ord a => DFA a -> DFA a -> Maybe (DFA a)
-dfaMinus dfa1 dfa2 =
+dfaMinus =
   crossProductConstruct
   (\(q1, q2) (f1, f2) -> Set.member q1 f1 && not (Set.member q2 f2))
-  dfa1
-  dfa2
 
 -- | Returns an NFA accepting the union of the languages specified by the input
 --   NFAs. Performs the union by creating a new node as start state with
